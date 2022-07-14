@@ -2,21 +2,26 @@ package cat.hack3.mangrana.radarr.api.client.process;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.google.api.client.MovieCloudCopyService;
 import cat.hack3.mangrana.radarr.api.client.gateway.RadarrApiGateway;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 import cat.hack3.mangrana.radarr.api.schema.queue.Record;
 import org.apache.commons.lang.NotImplementedException;
 
+import java.io.IOException;
+
+import static cat.hack3.mangrana.utils.Output.log;
+
 public class DownloadedExternallyHandler {
 
     RadarrApiGateway radarrApiGateway;
-    ConfigFileLoader configFileLoader;
+    MovieCloudCopyService copyService;
 
     private final String downloadedExternallyMsg = "Download wasn't grabbed by Radarr and not in a category, Skipping";
 
-    public DownloadedExternallyHandler(ConfigFileLoader configFileLoader) throws IncorrectWorkingReferencesException {
-        configFileLoader = new ConfigFileLoader();
+    public DownloadedExternallyHandler(ConfigFileLoader configFileLoader) throws IOException {
         radarrApiGateway = new RadarrApiGateway(configFileLoader);
+        copyService = new MovieCloudCopyService(configFileLoader);
     }
 
     public void handle () {
@@ -31,20 +36,18 @@ public class DownloadedExternallyHandler {
                 .forEach(this::processRecord);
     }
 
-    private void processRecord(Record record) {
-        String downloadedFileName = record.getTitle();
-        Integer movieRadarrId = record.getMovieId();
-        String destinationPath = record.getMovie().getPath();
-        copyMovieFromDownloadToRadarrFolder(downloadedFileName, destinationPath);
-        notifyRadarrToRefresh(movieRadarrId);
+    private void processRecord(Record queueItem) {
+        try {
+            copyMovieFromDownloadToRadarrFolder(queueItem);
+            notifyRadarrToRefresh(queueItem.getMovieId());
+        } catch (IOException e) {
+           log("could not copy the file :( "+queueItem.getTitle());
+           e.printStackTrace();
+        }
     }
 
-    private void copyMovieFromDownloadToRadarrFolder(String downloadedFileName, String destinationPath) {
-        throw new NotImplementedException();
-    }
-
-    private String getDestinationPathFromMovieRadarrId(Integer movieRadarrId) {
-        throw new NotImplementedException();
+    private void copyMovieFromDownloadToRadarrFolder(Record queueItem) throws IOException {
+        copyService.copyVideoFile(queueItem.getTitle(), queueItem.getMovie().getPath());
     }
 
     private void notifyRadarrToRefresh(Integer movieRadarrId) {
