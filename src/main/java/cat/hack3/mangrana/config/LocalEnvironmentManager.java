@@ -6,7 +6,7 @@ public class LocalEnvironmentManager {
 
     private LocalEnvironmentManager(){}
 
-    public static final String LOCAL_PROJECT_PATH = "/Volumes/usbshare1/docker/MANGRANA/my tools/java projects/AfterFilebotMoveProcessor";
+    public static final String LOCAL_PROJECT_PATH = System.getProperty("user.dir");
 
     public static boolean isLocal () {
         String envVar = System.getenv("ENV");
