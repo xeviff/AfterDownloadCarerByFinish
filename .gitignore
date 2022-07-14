@@ -1,3 +1,5 @@
 /config/RadarrFixerConfig.yml
 /src/main/resources/credentials.json
 /tokens/StoredCredential
+/.idea/
+/target/
