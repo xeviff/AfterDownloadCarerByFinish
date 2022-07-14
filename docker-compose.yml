@@ -1,0 +1,10 @@
+---
+version: "2.1"
+services:
+  radarr-fixer-after-filebot:
+    container_name: mangrana_java_radarr_fix
+    image: radarr-fixer-after-filebot:latest
+    build: .
+    volumes:
+      - /volume1/homes/xavier/logs/filebot:/filebot_logs
+      - ./config:/config
