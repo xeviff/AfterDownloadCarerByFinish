@@ -25,7 +25,7 @@ public class GoogleDriveApiGateway {
     }
 
     public File lookupElementByName(String elementName, GoogleElementType type, String relatedTeamDriveId) throws IOException {
-        String query = "name = '" + elementName + "'"
+        String query = "name = '" + elementName.replace("'","\\'") + "'"
                 + " and trashed=false"
                 + getTypeFilterQuery(type);
 
@@ -49,8 +49,9 @@ public class GoogleDriveApiGateway {
                 files.forEach(fl -> log(fl.toString()));
             }
             return files.get(0);
+        } else {
+            throw new NoSuchElementException("no elements in the list xO");
         }
-        else throw new NoSuchElementException("no elements in the list xO");
     }
 
     public void copyFile(String fileId, String destinationFolderId) throws IOException {
@@ -71,6 +72,18 @@ public class GoogleDriveApiGateway {
         if (CollectionUtils.isNotEmpty(file.getParents()))
             return file.getParents().get(0);
         else throw new NoSuchElementException("parents not found");
+    }
+
+    public File createFolder(String name, String parentFolderId) throws IOException {
+        File fileMetadata = new File();
+        fileMetadata.setName(name);
+        fileMetadata.setMimeType("application/vnd.google-apps.folder");
+        fileMetadata.setParents(Collections.singletonList(parentFolderId));
+        return service
+                .files()
+                .create(fileMetadata)
+                .setSupportsTeamDrives(true)
+                .execute();
     }
 
     private String getTypeFilterQuery(GoogleElementType type) {

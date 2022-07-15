@@ -2,10 +2,7 @@ package cat.hack3.mangrana.radarr.api.client.gateway;
 
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -19,5 +16,9 @@ public interface RadarrAPIInterface {
     @Produces({ MediaType.APPLICATION_JSON })
     QueueResourcePagingResource getQueue(@QueryParam("includeMovie") boolean includeMovie, @QueryParam("apikey") String apikey);
 
+    @DELETE
+    @Path("/queue/{id}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    void removeQueueItem(@PathParam("id") int itemId, @QueryParam("removeFromClient") boolean removeFromClient, @QueryParam("apikey") String apikey);
 
 }
