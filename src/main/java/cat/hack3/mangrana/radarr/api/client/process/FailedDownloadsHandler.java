@@ -10,14 +10,13 @@ import java.io.IOException;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
-public class DownloadedExternallyHandler {
+public class FailedDownloadsHandler {
 
     RadarrApiGateway radarrApiGateway;
     MovieCloudCopyService copyService;
 
-    private final String downloadedExternallyMsg = "Download wasn't grabbed by Radarr and not in a category, Skipping";
 
-    public DownloadedExternallyHandler(ConfigFileLoader configFileLoader) throws IOException {
+    public FailedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         radarrApiGateway = new RadarrApiGateway(configFileLoader);
         copyService = new MovieCloudCopyService(configFileLoader);
     }
@@ -26,11 +25,7 @@ public class DownloadedExternallyHandler {
         QueueResourcePagingResource queue = radarrApiGateway.getQueue();
         queue.getRecords()
                 .stream()
-                .filter(rc -> rc.getStatusMessages()
-                        .stream()
-                        .anyMatch(stMsg -> stMsg.getMessages()
-                                .stream()
-                                .anyMatch(msg -> msg.contains(downloadedExternallyMsg))))
+                .filter(this::isRecordSeemsToFailed)
                 .forEach(this::processRecord);
     }
 
@@ -44,6 +39,14 @@ public class DownloadedExternallyHandler {
            log("could not copy the file :( "+queueItem.getTitle());
            e.printStackTrace();
         }
+    }
+
+    private boolean isRecordSeemsToFailed(Record rcd) {
+        boolean importing = "importing".equals(rcd.getTrackedDownloadState());
+        if (importing) log("skipping already importing download: "+rcd.getTitle());
+        return
+                "warning".equals(rcd.getTrackedDownloadStatus())
+                && !importing;
     }
 
 }
