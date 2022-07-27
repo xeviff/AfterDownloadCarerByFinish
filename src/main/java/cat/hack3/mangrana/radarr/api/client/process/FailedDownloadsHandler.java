@@ -1,7 +1,7 @@
 package cat.hack3.mangrana.radarr.api.client.process;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.google.api.client.MovieCloudCopyService;
+import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.radarr.api.client.gateway.RadarrApiGateway;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 import cat.hack3.mangrana.radarr.api.schema.queue.Record;
@@ -13,12 +13,12 @@ import static cat.hack3.mangrana.utils.Output.log;
 public class FailedDownloadsHandler {
 
     RadarrApiGateway radarrApiGateway;
-    MovieCloudCopyService copyService;
+    RemoteCopyService copyService;
 
 
     public FailedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         radarrApiGateway = new RadarrApiGateway(configFileLoader);
-        copyService = new MovieCloudCopyService(configFileLoader);
+        copyService = new RemoteCopyService(configFileLoader);
     }
 
     public void handle () {

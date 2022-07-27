@@ -12,12 +12,12 @@ import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
 import static cat.hack3.mangrana.utils.Output.log;
 
-public class MovieCloudCopyService {
+public class RemoteCopyService {
 
     ConfigFileLoader configFileLoader;
     GoogleDriveApiGateway googleDriveApiGateway;
 
-    public MovieCloudCopyService(ConfigFileLoader configFileLoader) throws IOException {
+    public RemoteCopyService(ConfigFileLoader configFileLoader) throws IOException {
         this.configFileLoader = configFileLoader;
         googleDriveApiGateway = new GoogleDriveApiGateway();
     }
