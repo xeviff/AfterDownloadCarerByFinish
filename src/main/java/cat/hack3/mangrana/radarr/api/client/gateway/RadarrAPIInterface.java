@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.radarr.api.client.gateway;
 
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
+import cat.hack3.mangrana.utils.rest.APIInterface;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -9,7 +10,7 @@ import javax.ws.rs.core.MediaType;
  * For more information, visit: <a href="https://radarr.video/docs/api/#/Movie/get_api_v3_movie">...</a>
  */
 @Path("/api/v3")
-public interface RadarrAPIInterface {
+public interface RadarrAPIInterface extends APIInterface {
 
     @GET
     @Path("/queue")
