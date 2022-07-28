@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.radarr.api.client.process;
+package cat.hack3.mangrana.workers;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
@@ -10,18 +10,19 @@ import java.io.IOException;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
-public class FailedDownloadsHandler {
+public class RadarrFailedDownloadsHandler {
 
     RadarrApiGateway radarrApiGateway;
     RemoteCopyService copyService;
 
 
-    public FailedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
+    public RadarrFailedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         radarrApiGateway = new RadarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
     }
 
     public void handle () {
+        log("this is the radarr failed downloads handler. Scanning queue...");
         QueueResourcePagingResource queue = radarrApiGateway.getQueue();
         queue.getRecords()
                 .stream()
