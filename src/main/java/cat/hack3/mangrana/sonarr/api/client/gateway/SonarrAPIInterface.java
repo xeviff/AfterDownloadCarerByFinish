@@ -1,6 +1,6 @@
 package cat.hack3.mangrana.sonarr.api.client.gateway;
 
-import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
+import cat.hack3.mangrana.radarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
 import cat.hack3.mangrana.utils.rest.APIInterface;
 
@@ -17,5 +17,10 @@ public interface SonarrAPIInterface extends APIInterface {
     @Path("/queue")
     @Produces({ MediaType.APPLICATION_JSON })
     SonarrQueue getQueue(@QueryParam("apikey") String apikey);
+
+    @GET
+    @Path("/series/{id}")
+    @Produces({ MediaType.APPLICATION_JSON })
+    SonarrSerie getSerieById(@PathParam("id") Integer idSerie, @QueryParam("apikey") String apikey);
 
 }

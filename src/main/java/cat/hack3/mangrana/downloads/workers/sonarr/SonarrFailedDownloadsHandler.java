@@ -3,6 +3,7 @@ package cat.hack3.mangrana.downloads.workers.sonarr;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.sonarr.bean.Season;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
+import cat.hack3.mangrana.radarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.sonarr.api.schema.queue.Record;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
@@ -66,7 +67,8 @@ public class SonarrFailedDownloadsHandler {
     }
 
     private void handleSeason(Season season) {
-        sonarrApiGateway.getSerieById(season.getSeriesId());
+        SonarrSerie series = sonarrApiGateway.getSerieById(season.getSeriesId());
+        String seriePath = series.getPath();
     }
 
     private Season buildSeason(Map.Entry<String, List<Record>> entry) {

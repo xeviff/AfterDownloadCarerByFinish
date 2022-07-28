@@ -51,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "id"
 })
 @Generated("jsonschema2pojo")
-public class SonarrSeries {
+public class SonarrSerie {
 
     @JsonProperty("title")
     private String title;
@@ -134,7 +134,7 @@ public class SonarrSeries {
         this.title = title;
     }
 
-    public SonarrSeries withTitle(String title) {
+    public SonarrSerie withTitle(String title) {
         this.title = title;
         return this;
     }
@@ -149,7 +149,7 @@ public class SonarrSeries {
         this.alternateTitles = alternateTitles;
     }
 
-    public SonarrSeries withAlternateTitles(List<Object> alternateTitles) {
+    public SonarrSerie withAlternateTitles(List<Object> alternateTitles) {
         this.alternateTitles = alternateTitles;
         return this;
     }
@@ -164,7 +164,7 @@ public class SonarrSeries {
         this.sortTitle = sortTitle;
     }
 
-    public SonarrSeries withSortTitle(String sortTitle) {
+    public SonarrSerie withSortTitle(String sortTitle) {
         this.sortTitle = sortTitle;
         return this;
     }
@@ -179,7 +179,7 @@ public class SonarrSeries {
         this.status = status;
     }
 
-    public SonarrSeries withStatus(String status) {
+    public SonarrSerie withStatus(String status) {
         this.status = status;
         return this;
     }
@@ -194,7 +194,7 @@ public class SonarrSeries {
         this.ended = ended;
     }
 
-    public SonarrSeries withEnded(Boolean ended) {
+    public SonarrSerie withEnded(Boolean ended) {
         this.ended = ended;
         return this;
     }
@@ -209,7 +209,7 @@ public class SonarrSeries {
         this.overview = overview;
     }
 
-    public SonarrSeries withOverview(String overview) {
+    public SonarrSerie withOverview(String overview) {
         this.overview = overview;
         return this;
     }
@@ -224,7 +224,7 @@ public class SonarrSeries {
         this.previousAiring = previousAiring;
     }
 
-    public SonarrSeries withPreviousAiring(String previousAiring) {
+    public SonarrSerie withPreviousAiring(String previousAiring) {
         this.previousAiring = previousAiring;
         return this;
     }
@@ -239,7 +239,7 @@ public class SonarrSeries {
         this.network = network;
     }
 
-    public SonarrSeries withNetwork(String network) {
+    public SonarrSerie withNetwork(String network) {
         this.network = network;
         return this;
     }
@@ -254,7 +254,7 @@ public class SonarrSeries {
         this.airTime = airTime;
     }
 
-    public SonarrSeries withAirTime(String airTime) {
+    public SonarrSerie withAirTime(String airTime) {
         this.airTime = airTime;
         return this;
     }
@@ -269,7 +269,7 @@ public class SonarrSeries {
         this.images = images;
     }
 
-    public SonarrSeries withImages(List<Image> images) {
+    public SonarrSerie withImages(List<Image> images) {
         this.images = images;
         return this;
     }
@@ -284,7 +284,7 @@ public class SonarrSeries {
         this.seasons = seasons;
     }
 
-    public SonarrSeries withSeasons(List<Season> seasons) {
+    public SonarrSerie withSeasons(List<Season> seasons) {
         this.seasons = seasons;
         return this;
     }
@@ -299,7 +299,7 @@ public class SonarrSeries {
         this.year = year;
     }
 
-    public SonarrSeries withYear(Integer year) {
+    public SonarrSerie withYear(Integer year) {
         this.year = year;
         return this;
     }
@@ -314,7 +314,7 @@ public class SonarrSeries {
         this.path = path;
     }
 
-    public SonarrSeries withPath(String path) {
+    public SonarrSerie withPath(String path) {
         this.path = path;
         return this;
     }
@@ -329,7 +329,7 @@ public class SonarrSeries {
         this.qualityProfileId = qualityProfileId;
     }
 
-    public SonarrSeries withQualityProfileId(Integer qualityProfileId) {
+    public SonarrSerie withQualityProfileId(Integer qualityProfileId) {
         this.qualityProfileId = qualityProfileId;
         return this;
     }
@@ -344,7 +344,7 @@ public class SonarrSeries {
         this.languageProfileId = languageProfileId;
     }
 
-    public SonarrSeries withLanguageProfileId(Integer languageProfileId) {
+    public SonarrSerie withLanguageProfileId(Integer languageProfileId) {
         this.languageProfileId = languageProfileId;
         return this;
     }
@@ -359,7 +359,7 @@ public class SonarrSeries {
         this.seasonFolder = seasonFolder;
     }
 
-    public SonarrSeries withSeasonFolder(Boolean seasonFolder) {
+    public SonarrSerie withSeasonFolder(Boolean seasonFolder) {
         this.seasonFolder = seasonFolder;
         return this;
     }
@@ -374,7 +374,7 @@ public class SonarrSeries {
         this.monitored = monitored;
     }
 
-    public SonarrSeries withMonitored(Boolean monitored) {
+    public SonarrSerie withMonitored(Boolean monitored) {
         this.monitored = monitored;
         return this;
     }
@@ -389,7 +389,7 @@ public class SonarrSeries {
         this.useSceneNumbering = useSceneNumbering;
     }
 
-    public SonarrSeries withUseSceneNumbering(Boolean useSceneNumbering) {
+    public SonarrSerie withUseSceneNumbering(Boolean useSceneNumbering) {
         this.useSceneNumbering = useSceneNumbering;
         return this;
     }
@@ -404,7 +404,7 @@ public class SonarrSeries {
         this.runtime = runtime;
     }
 
-    public SonarrSeries withRuntime(Integer runtime) {
+    public SonarrSerie withRuntime(Integer runtime) {
         this.runtime = runtime;
         return this;
     }
@@ -419,7 +419,7 @@ public class SonarrSeries {
         this.tvdbId = tvdbId;
     }
 
-    public SonarrSeries withTvdbId(Integer tvdbId) {
+    public SonarrSerie withTvdbId(Integer tvdbId) {
         this.tvdbId = tvdbId;
         return this;
     }
@@ -434,7 +434,7 @@ public class SonarrSeries {
         this.tvRageId = tvRageId;
     }
 
-    public SonarrSeries withTvRageId(Integer tvRageId) {
+    public SonarrSerie withTvRageId(Integer tvRageId) {
         this.tvRageId = tvRageId;
         return this;
     }
@@ -449,7 +449,7 @@ public class SonarrSeries {
         this.tvMazeId = tvMazeId;
     }
 
-    public SonarrSeries withTvMazeId(Integer tvMazeId) {
+    public SonarrSerie withTvMazeId(Integer tvMazeId) {
         this.tvMazeId = tvMazeId;
         return this;
     }
@@ -464,7 +464,7 @@ public class SonarrSeries {
         this.firstAired = firstAired;
     }
 
-    public SonarrSeries withFirstAired(String firstAired) {
+    public SonarrSerie withFirstAired(String firstAired) {
         this.firstAired = firstAired;
         return this;
     }
@@ -479,7 +479,7 @@ public class SonarrSeries {
         this.seriesType = seriesType;
     }
 
-    public SonarrSeries withSeriesType(String seriesType) {
+    public SonarrSerie withSeriesType(String seriesType) {
         this.seriesType = seriesType;
         return this;
     }
@@ -494,7 +494,7 @@ public class SonarrSeries {
         this.cleanTitle = cleanTitle;
     }
 
-    public SonarrSeries withCleanTitle(String cleanTitle) {
+    public SonarrSerie withCleanTitle(String cleanTitle) {
         this.cleanTitle = cleanTitle;
         return this;
     }
@@ -509,7 +509,7 @@ public class SonarrSeries {
         this.imdbId = imdbId;
     }
 
-    public SonarrSeries withImdbId(String imdbId) {
+    public SonarrSerie withImdbId(String imdbId) {
         this.imdbId = imdbId;
         return this;
     }
@@ -524,7 +524,7 @@ public class SonarrSeries {
         this.titleSlug = titleSlug;
     }
 
-    public SonarrSeries withTitleSlug(String titleSlug) {
+    public SonarrSerie withTitleSlug(String titleSlug) {
         this.titleSlug = titleSlug;
         return this;
     }
@@ -539,7 +539,7 @@ public class SonarrSeries {
         this.rootFolderPath = rootFolderPath;
     }
 
-    public SonarrSeries withRootFolderPath(String rootFolderPath) {
+    public SonarrSerie withRootFolderPath(String rootFolderPath) {
         this.rootFolderPath = rootFolderPath;
         return this;
     }
@@ -554,7 +554,7 @@ public class SonarrSeries {
         this.genres = genres;
     }
 
-    public SonarrSeries withGenres(List<String> genres) {
+    public SonarrSerie withGenres(List<String> genres) {
         this.genres = genres;
         return this;
     }
@@ -569,7 +569,7 @@ public class SonarrSeries {
         this.tags = tags;
     }
 
-    public SonarrSeries withTags(List<Object> tags) {
+    public SonarrSerie withTags(List<Object> tags) {
         this.tags = tags;
         return this;
     }
@@ -584,7 +584,7 @@ public class SonarrSeries {
         this.added = added;
     }
 
-    public SonarrSeries withAdded(String added) {
+    public SonarrSerie withAdded(String added) {
         this.added = added;
         return this;
     }
@@ -599,7 +599,7 @@ public class SonarrSeries {
         this.ratings = ratings;
     }
 
-    public SonarrSeries withRatings(Ratings ratings) {
+    public SonarrSerie withRatings(Ratings ratings) {
         this.ratings = ratings;
         return this;
     }
@@ -614,7 +614,7 @@ public class SonarrSeries {
         this.statistics = statistics;
     }
 
-    public SonarrSeries withStatistics(Statistics__1 statistics) {
+    public SonarrSerie withStatistics(Statistics__1 statistics) {
         this.statistics = statistics;
         return this;
     }
@@ -629,7 +629,7 @@ public class SonarrSeries {
         this.id = id;
     }
 
-    public SonarrSeries withId(Integer id) {
+    public SonarrSerie withId(Integer id) {
         this.id = id;
         return this;
     }
@@ -644,7 +644,7 @@ public class SonarrSeries {
         this.additionalProperties.put(name, value);
     }
 
-    public SonarrSeries withAdditionalProperty(String name, Object value) {
+    public SonarrSerie withAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
         return this;
     }
@@ -652,7 +652,7 @@ public class SonarrSeries {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(SonarrSeries.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
+        sb.append(SonarrSerie.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
         sb.append("title");
         sb.append('=');
         sb.append(((this.title == null)?"<null>":this.title));
@@ -847,10 +847,10 @@ public class SonarrSeries {
         if (other == this) {
             return true;
         }
-        if ((other instanceof SonarrSeries) == false) {
+        if ((other instanceof SonarrSerie) == false) {
             return false;
         }
-        SonarrSeries rhs = ((SonarrSeries) other);
+        SonarrSerie rhs = ((SonarrSerie) other);
         return ((((((((((((((((((((((((((((((((((((this.tvMazeId == rhs.tvMazeId)||((this.tvMazeId!= null)&&this.tvMazeId.equals(rhs.tvMazeId)))&&((this.previousAiring == rhs.previousAiring)||((this.previousAiring!= null)&&this.previousAiring.equals(rhs.previousAiring))))&&((this.alternateTitles == rhs.alternateTitles)||((this.alternateTitles!= null)&&this.alternateTitles.equals(rhs.alternateTitles))))&&((this.year == rhs.year)||((this.year!= null)&&this.year.equals(rhs.year))))&&((this.rootFolderPath == rhs.rootFolderPath)||((this.rootFolderPath!= null)&&this.rootFolderPath.equals(rhs.rootFolderPath))))&&((this.added == rhs.added)||((this.added!= null)&&this.added.equals(rhs.added))))&&((this.imdbId == rhs.imdbId)||((this.imdbId!= null)&&this.imdbId.equals(rhs.imdbId))))&&((this.languageProfileId == rhs.languageProfileId)||((this.languageProfileId!= null)&&this.languageProfileId.equals(rhs.languageProfileId))))&&((this.title == rhs.title)||((this.title!= null)&&this.title.equals(rhs.title))))&&((this.network == rhs.network)||((this.network!= null)&&this.network.equals(rhs.network))))&&((this.monitored == rhs.monitored)||((this.monitored!= null)&&this.monitored.equals(rhs.monitored))))&&((this.cleanTitle == rhs.cleanTitle)||((this.cleanTitle!= null)&&this.cleanTitle.equals(rhs.cleanTitle))))&&((this.path == rhs.path)||((this.path!= null)&&this.path.equals(rhs.path))))&&((this.titleSlug == rhs.titleSlug)||((this.titleSlug!= null)&&this.titleSlug.equals(rhs.titleSlug))))&&((this.qualityProfileId == rhs.qualityProfileId)||((this.qualityProfileId!= null)&&this.qualityProfileId.equals(rhs.qualityProfileId))))&&((this.seriesType == rhs.seriesType)||((this.seriesType!= null)&&this.seriesType.equals(rhs.seriesType))))&&((this.genres == rhs.genres)||((this.genres!= null)&&this.genres.equals(rhs.genres))))&&((this.ratings == rhs.ratings)||((this.ratings!= null)&&this.ratings.equals(rhs.ratings))))&&((this.useSceneNumbering == rhs.useSceneNumbering)||((this.useSceneNumbering!= null)&&this.useSceneNumbering.equals(rhs.useSceneNumbering))))&&((this.seasonFolder == rhs.seasonFolder)||((this.seasonFolder!= null)&&this.seasonFolder.equals(rhs.seasonFolder))))&&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))&&((this.airTime == rhs.airTime)||((this.airTime!= null)&&this.airTime.equals(rhs.airTime))))&&((this.overview == rhs.overview)||((this.overview!= null)&&this.overview.equals(rhs.overview))))&&((this.images == rhs.images)||((this.images!= null)&&this.images.equals(rhs.images))))&&((this.seasons == rhs.seasons)||((this.seasons!= null)&&this.seasons.equals(rhs.seasons))))&&((this.tvdbId == rhs.tvdbId)||((this.tvdbId!= null)&&this.tvdbId.equals(rhs.tvdbId))))&&((this.firstAired == rhs.firstAired)||((this.firstAired!= null)&&this.firstAired.equals(rhs.firstAired))))&&((this.runtime == rhs.runtime)||((this.runtime!= null)&&this.runtime.equals(rhs.runtime))))&&((this.tags == rhs.tags)||((this.tags!= null)&&this.tags.equals(rhs.tags))))&&((this.sortTitle == rhs.sortTitle)||((this.sortTitle!= null)&&this.sortTitle.equals(rhs.sortTitle))))&&((this.tvRageId == rhs.tvRageId)||((this.tvRageId!= null)&&this.tvRageId.equals(rhs.tvRageId))))&&((this.ended == rhs.ended)||((this.ended!= null)&&this.ended.equals(rhs.ended))))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.status == rhs.status)||((this.status!= null)&&this.status.equals(rhs.status))))&&((this.statistics == rhs.statistics)||((this.statistics!= null)&&this.statistics.equals(rhs.statistics))));
     }
 
