@@ -15,13 +15,17 @@ import static cat.hack3.mangrana.utils.Output.log;
 public class ConfigFileLoader {
 
     private static final String CONFIG_FOLDER = "/config";
-    private static final String CONFIG_FILE = "RadarrFixerConfig.yml";
+    private static final String CONFIG_FILE = "AfterDownloadCarerConfig.yml";
     private static final String RADARR_API_KEY = "radarr_api_key";
     private static final String RADARR_HOST_KEY = "radarr_api_host";
+    private static final String SONARR_API_KEY = "sonarr_api_key";
+    private static final String SONARR_HOST_KEY = "sonarr_api_host";
     private static final String DOWNLOADS_TD_ID_KEY = "downloads_team_drive_id";
     private static final String MOVIES_TD_ID_KEY = "movies_team_drive_id";
-    private final String apiKey;
-    private final String host;
+    private final String radarrApiKey;
+    private final String radarrHost;
+    private final String sonarrApiKey;
+    private final String sonarrHost;
     private final String downloadsTDid;
     private final String moviesTDid;
 
@@ -32,12 +36,19 @@ public class ConfigFileLoader {
                     new File(getConfigFolder().concat("/").concat(CONFIG_FILE)))
                     .readYamlMapping();
 
-            apiKey = Optional.ofNullable(
+            radarrApiKey = Optional.ofNullable(
                      config.string(RADARR_API_KEY))
-                     .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the API key :(") );
-            host = Optional.ofNullable(
+                     .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the radarr API key :(") );
+            radarrHost = Optional.ofNullable(
                      config.string(RADARR_HOST_KEY))
-                     .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the HOST :(") );
+                     .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the radarr HOST :(") );
+            sonarrApiKey = Optional.ofNullable(
+                            config.string(SONARR_API_KEY))
+                    .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the sonarr API key :(") );
+            sonarrHost = Optional.ofNullable(
+                            config.string(SONARR_HOST_KEY))
+                    .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the sonarr HOST :(") );
+
             downloadsTDid = Optional.ofNullable(
                             config.string(DOWNLOADS_TD_ID_KEY))
                     .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the downloads_team_drive_id :(") );
@@ -54,11 +65,17 @@ public class ConfigFileLoader {
                 + CONFIG_FOLDER;
     }
 
-    public String getApiKey() {
-        return apiKey;
+    public String getRadarrApiKey() {
+        return radarrApiKey;
     }
-    public String getHost() {
-        return host;
+    public String getRadarrHost() {
+        return radarrHost;
+    }
+    public String getSonarrApiKey() {
+        return sonarrApiKey;
+    }
+    public String getSonarrHost() {
+        return sonarrHost;
     }
     public String getDownloadsTDid() {
         return downloadsTDid;

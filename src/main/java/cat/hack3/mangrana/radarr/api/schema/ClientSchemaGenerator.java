@@ -18,7 +18,7 @@ public class ClientSchemaGenerator {
 
     private void generate() throws IncorrectWorkingReferencesException, IOException {
         ConfigFileLoader configFileLoader = new ConfigFileLoader();
-        String schemaUrl = configFileLoader.getHost().concat("/api/v3/queue?includeMovie=true&apikey=".concat(configFileLoader.getApiKey()));
+        String schemaUrl = configFileLoader.getRadarrHost().concat("/api/v3/queue?includeMovie=true&apikey=".concat(configFileLoader.getRadarrApiKey()));
         ClassGeneratorFromJson generatorFromJson = new ClassGeneratorFromJson();
         generatorFromJson.generateSchema(schemaUrl, "cat.hack3.mangrana.radarr.api.schema.queue", "QueueResourcePagingResource");
     }
