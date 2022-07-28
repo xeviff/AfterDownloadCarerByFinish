@@ -13,7 +13,8 @@ import static cat.hack3.mangrana.utils.Output.log;
 
 public class APIProxyBuilderSingleton {
 
-    private static APIInterface apiInterface = null;
+    private static RadarrAPIInterface radarrAPIInterface = null;
+    private static SonarrAPIInterface sonarrAPIInterface = null;
     private APIProxyBuilderSingleton(){}
 
     private static void init (String host, Class<? extends APIInterface> clazz) {
@@ -21,19 +22,24 @@ public class APIProxyBuilderSingleton {
         UriBuilder fullPath = UriBuilder.fromPath(host);
         ResteasyClient client = (ResteasyClient) ClientBuilder.newClient();
         ResteasyWebTarget target = client.target(fullPath);
-        apiInterface = target.proxy(clazz);
+        APIInterface apiInterface = target.proxy(clazz);
+        if (clazz.getName().equals(RadarrAPIInterface.class.getName())) {
+            radarrAPIInterface = (RadarrAPIInterface) apiInterface;
+        } else if (clazz.getName().equals(SonarrAPIInterface.class.getName())) {
+            sonarrAPIInterface = (SonarrAPIInterface) apiInterface;
+        }
     }
 
     public static RadarrAPIInterface getRadarrInterface(String host) {
-        if (Objects.isNull(apiInterface))
+        if (Objects.isNull(radarrAPIInterface))
             init(host, RadarrAPIInterface.class);
-        return (RadarrAPIInterface) apiInterface;
+        return radarrAPIInterface;
     }
 
     public static SonarrAPIInterface getSonarrInterface(String host) {
-        if (Objects.isNull(apiInterface))
+        if (Objects.isNull(sonarrAPIInterface))
             init(host, SonarrAPIInterface.class);
-        return (SonarrAPIInterface) apiInterface;
+        return sonarrAPIInterface;
     }
 
 }

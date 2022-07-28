@@ -14,7 +14,7 @@ public class SonarrApiGateway {
     private final SonarrAPIInterface proxy;
 
     public SonarrApiGateway(ConfigFileLoader config) {
-        apiKey = config.getRadarrApiKey();
+        apiKey = config.getSonarrApiKey();
         proxy = APIProxyBuilderSingleton.getSonarrInterface(config.getSonarrHost());
     }
 
