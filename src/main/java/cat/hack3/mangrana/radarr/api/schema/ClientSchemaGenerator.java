@@ -12,15 +12,38 @@ import java.io.IOException;
 @Deprecated
 public class ClientSchemaGenerator {
 
-    public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
-         new ClientSchemaGenerator().generate();
+    ConfigFileLoader configFileLoader;
+
+    private ClientSchemaGenerator() throws IncorrectWorkingReferencesException {
+        configFileLoader = new ConfigFileLoader();
     }
 
-    private void generate() throws IncorrectWorkingReferencesException, IOException {
-        ConfigFileLoader configFileLoader = new ConfigFileLoader();
-        String schemaUrl = configFileLoader.getRadarrHost().concat("/api/v3/queue?includeMovie=true&apikey=".concat(configFileLoader.getRadarrApiKey()));
+    public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
+         new ClientSchemaGenerator().generateSonarrClientSchema();
+    }
+
+    private void generateRadarrClientSchema() throws  IOException {
+        generate(
+                configFileLoader.getRadarrHost(),
+                configFileLoader.getRadarrApiKey(),
+                "/api/v3/queue?includeMovie=true?apikey=",
+                "cat.hack3.mangrana.radarr.api.schema.queue",
+                "QueueResourcePagingResource");
+    }
+
+    private void generateSonarrClientSchema() throws  IOException {
+        generate(
+                configFileLoader.getSonarrHost(),
+                "/api/v3/queue?apikey=",
+                configFileLoader.getSonarrApiKey(),
+                "cat.hack3.mangrana.sonarr.api.schema.queue",
+                "SonarrQueue");
+    }
+
+    private void generate(String host, String uri, String apiKey, String pckg, String className) throws IOException {
+        String schemaUrl = host.concat(uri.concat(apiKey));
         ClassGeneratorFromJson generatorFromJson = new ClassGeneratorFromJson();
-        generatorFromJson.generateSchema(schemaUrl, "cat.hack3.mangrana.radarr.api.schema.queue", "QueueResourcePagingResource");
+        generatorFromJson.generateSchema(schemaUrl, pckg, className);
     }
 
 }
