@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.downloads.workers;
+package cat.hack3.mangrana.downloads.workers.radarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;

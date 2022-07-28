@@ -1,8 +1,8 @@
 package cat.hack3.mangrana.downloads;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.downloads.workers.RadarrFailedDownloadsHandler;
-import cat.hack3.mangrana.downloads.workers.SonarrFailedDownloadsHandler;
+import cat.hack3.mangrana.downloads.workers.radarr.RadarrFailedDownloadsHandler;
+import cat.hack3.mangrana.downloads.workers.sonarr.SonarrFailedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 
 import java.io.IOException;
