@@ -19,7 +19,7 @@ public class ClientSchemaGenerator {
     }
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
-         new ClientSchemaGenerator().generateSonarrClientSchema();
+         new ClientSchemaGenerator().generateSonarrSeriesClientSchema();
     }
 
     private void generateRadarrClientSchema() throws  IOException {
@@ -31,13 +31,22 @@ public class ClientSchemaGenerator {
                 "QueueResourcePagingResource");
     }
 
-    private void generateSonarrClientSchema() throws  IOException {
+    private void generateSonarrQueueClientSchema() throws  IOException {
         generate(
                 configFileLoader.getSonarrHost(),
                 "/api/v3/queue?apikey=",
                 configFileLoader.getSonarrApiKey(),
                 "cat.hack3.mangrana.sonarr.api.schema.queue",
                 "SonarrQueue");
+    }
+
+    private void generateSonarrSeriesClientSchema() throws  IOException {
+        generate(
+                configFileLoader.getSonarrHost(),
+                "/api/v3/series/2220?apikey=",
+                configFileLoader.getSonarrApiKey(),
+                "cat.hack3.mangrana.sonarr.api.schema.series",
+                "SonarrSeries");
     }
 
     private void generate(String host, String uri, String apiKey, String pckg, String className) throws IOException {
