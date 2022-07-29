@@ -2,15 +2,18 @@ package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.sonarr.bean.Season;
+import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.radarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.sonarr.api.schema.queue.Record;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
+import cat.hack3.mangrana.utils.StringCaptor;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static cat.hack3.mangrana.utils.Output.log;
@@ -60,15 +63,29 @@ public class SonarrFailedDownloadsHandler {
         recordsByTitle.forEach(this::handleSeason);
     }
 
-
     private void handleSingleEpisodes(List<Record> episodeRecords) {
         log("going to handle episodes");
         episodeRecords.forEach(ep -> log(ep.getTitle()));
     }
 
     private void handleSeason(Season season) {
-        SonarrSerie series = sonarrApiGateway.getSerieById(season.getSeriesId());
-        String seriePath = series.getPath();
+        try {
+            String folderName = season.getTitle();
+            String seasonFolderName = getSeasonFolderName(folderName);
+            SonarrSerie series = sonarrApiGateway.getSerieById(season.getSeriesId());
+            String seriePath = series.getPath();
+        } catch (IncorrectWorkingReferencesException e) {
+            log("could not handle the season because of "+e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private String getSeasonFolderName (String folderName) throws IncorrectWorkingReferencesException {
+        String season = Optional.ofNullable(
+                StringCaptor.getMatchingSubstring(folderName, "S\\d{2}"))
+                .orElseThrow(() ->
+                        new IncorrectWorkingReferencesException("Couldn't determinate the season from: "+folderName));
+        return season.replaceFirst("S", "Temporada ");
     }
 
     private Season buildSeason(Map.Entry<String, List<Record>> entry) {
