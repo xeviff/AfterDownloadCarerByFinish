@@ -7,10 +7,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.o7planning.googledrive.example.GoogleDriveUtils;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
@@ -54,25 +51,45 @@ public class GoogleDriveApiGateway {
         }
     }
 
-    public void copyFile(String fileId, String destinationFolderId, Optional<String> newName) throws IOException {
+    public List<File> getChildrenById(String id, boolean onlyFolders)  {
+        List<File> fullFileList = new ArrayList<>();
+
+        String query =
+                "trashed=false and "+
+                        (onlyFolders ? "mimeType = 'application/vnd.google-apps.folder' and " : "")+
+                        "'"+id+"' in parents";
+
+        String pageToken = null;
+        do {
+            try {
+                FileList fileList = service.files()
+                        .list()
+                        .setQ(query)
+                        .setIncludeItemsFromAllDrives(true)
+                        .setSupportsTeamDrives(true)
+                        .setFields("nextPageToken, files(id, name)")
+                        .setPageToken(pageToken)
+                        .setOrderBy("name")
+                        .execute();
+
+                fullFileList.addAll(fileList.getFiles());
+                pageToken = fileList.getNextPageToken();
+            } catch (IOException e) {
+                log("ERROR during api call");
+                e.printStackTrace();
+            }
+        } while (pageToken != null);
+
+        return fullFileList;
+    }
+
+    public void copyFile(String fileId, String destinationFolderId) throws IOException {
         File newFileReference = new File();
         newFileReference.setParents(Collections.singletonList(destinationFolderId));
-        newName.ifPresent(newFileReference::setName);
         service.files()
                 .copy(fileId, newFileReference)
                 .setSupportsTeamDrives(true)
                 .execute();
-    }
-
-    public String getParentFolderIdFromFile (String elementId) throws IOException {
-        File file = service.files()
-                .get(elementId)
-                .setSupportsTeamDrives(true)
-                .setFields("parents")
-                .execute();
-        if (CollectionUtils.isNotEmpty(file.getParents()))
-            return file.getParents().get(0);
-        else throw new NoSuchElementException("parents not found");
     }
 
     public File createFolder(String name, String parentFolderId) throws IOException {

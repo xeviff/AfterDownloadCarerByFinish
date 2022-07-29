@@ -73,7 +73,7 @@ public class SonarrFailedDownloadsHandler {
             SonarrSerie serie = sonarrApiGateway.getSerieById(season.getSeriesId());
             copyService.copySeasonFromDownloadToItsLocation(
                     season.getDownloadedFolderName(),
-                    serie.getPath().substring(serie.getPath().lastIndexOf('/')),
+                    serie.getPath().substring(serie.getPath().lastIndexOf('/')+1),
                     getSeasonFolderName(season.getDownloadedFolderName()));
         } catch (IncorrectWorkingReferencesException | IOException e) {
             log("could not handle the season because of "+e.getMessage());
@@ -83,7 +83,7 @@ public class SonarrFailedDownloadsHandler {
 
     private String getSeasonFolderName (String folderName) throws IncorrectWorkingReferencesException {
         String season = Optional.ofNullable(
-                StringCaptor.getMatchingSubstring(folderName, "S\\d{2}"))
+                StringCaptor.getMatchingSubstring(folderName, "(S\\d{2})"))
                 .orElseThrow(() ->
                         new IncorrectWorkingReferencesException("Couldn't determinate the season from: "+folderName));
         return season.replaceFirst("S", "Temporada ");

@@ -6,7 +6,9 @@ import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.FOLDER;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
@@ -28,7 +30,7 @@ public class RemoteCopyService {
         if (Objects.nonNull(videoFile)) {
             String destinationFolderId = resolveFolderIdByPath(destinationFullPath);
             googleDriveApiGateway
-                    .copyFile(videoFile.getId(), destinationFolderId, Optional.empty());
+                    .copyFile(videoFile.getId(), destinationFolderId);
             log(">> copied successfully!! :D ");
             log("fileName: "+downloadedFileName);
             log("fileId: "+videoFile.getId());
@@ -77,6 +79,18 @@ public class RemoteCopyService {
     public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFolderName, String seasonFolderName) throws IOException {
         File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getDownloadsTDid());
         File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getSeriesTDid());
-        googleDriveApiGateway.copyFile(downloadedSeasonFolder.getId(), destinationSerieFolder.getId(), Optional.of(seasonFolderName));
+        File seasonFolder = googleDriveApiGateway.createFolder(seasonFolderName, destinationSerieFolder.getId());
+        List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenById(downloadedSeasonFolder.getId(), false);
+        seasonEpisodesGFiles.forEach(episodeFile ->
+                copySeasonEpisode(episodeFile, seasonFolder.getId()));
+    }
+
+    private void copySeasonEpisode(File episodeFile, String destinationSerieFolder) {
+        try {
+            googleDriveApiGateway.copyFile(episodeFile.getId(), destinationSerieFolder);
+        } catch (IOException e) {
+            log("caution! this file could not been copied!!");
+            e.printStackTrace();
+        }
     }
 }

@@ -35,7 +35,7 @@ public class Statistics__1 {
     @JsonProperty("totalEpisodeCount")
     private Integer totalEpisodeCount;
     @JsonProperty("sizeOnDisk")
-    private Integer sizeOnDisk;
+    private Long sizeOnDisk;
     @JsonProperty("releaseGroups")
     private List<Object> releaseGroups = new ArrayList<Object>();
     @JsonProperty("percentOfEpisodes")
@@ -104,16 +104,16 @@ public class Statistics__1 {
     }
 
     @JsonProperty("sizeOnDisk")
-    public Integer getSizeOnDisk() {
+    public Long getSizeOnDisk() {
         return sizeOnDisk;
     }
 
     @JsonProperty("sizeOnDisk")
-    public void setSizeOnDisk(Integer sizeOnDisk) {
+    public void setSizeOnDisk(Long sizeOnDisk) {
         this.sizeOnDisk = sizeOnDisk;
     }
 
-    public Statistics__1 withSizeOnDisk(Integer sizeOnDisk) {
+    public Statistics__1 withSizeOnDisk(Long sizeOnDisk) {
         this.sizeOnDisk = sizeOnDisk;
         return this;
     }
