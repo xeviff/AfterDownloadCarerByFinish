@@ -70,11 +70,12 @@ public class SonarrFailedDownloadsHandler {
 
     private void handleSeason(Season season) {
         try {
-            String folderName = season.getTitle();
-            String seasonFolderName = getSeasonFolderName(folderName);
-            SonarrSerie series = sonarrApiGateway.getSerieById(season.getSeriesId());
-            String seriePath = series.getPath();
-        } catch (IncorrectWorkingReferencesException e) {
+            SonarrSerie serie = sonarrApiGateway.getSerieById(season.getSeriesId());
+            copyService.copySeasonFromDownloadToItsLocation(
+                    season.getDownloadedFolderName(),
+                    serie.getPath().substring(serie.getPath().lastIndexOf('/')),
+                    getSeasonFolderName(season.getDownloadedFolderName()));
+        } catch (IncorrectWorkingReferencesException | IOException e) {
             log("could not handle the season because of "+e.getMessage());
             e.printStackTrace();
         }
@@ -89,7 +90,8 @@ public class SonarrFailedDownloadsHandler {
     }
 
     private Season buildSeason(Map.Entry<String, List<Record>> entry) {
-        return new Season(entry.getKey(), entry.getValue().get(0).getSeriesId());
+        Record rc = entry.getValue().get(0);
+        return new Season(entry.getKey(), rc.getSeriesId(), rc.getOutputPath());
     }
 
 }

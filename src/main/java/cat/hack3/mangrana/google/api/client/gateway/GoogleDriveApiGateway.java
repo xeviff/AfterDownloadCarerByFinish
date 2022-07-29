@@ -54,9 +54,10 @@ public class GoogleDriveApiGateway {
         }
     }
 
-    public void copyFile(String fileId, String destinationFolderId) throws IOException {
+    public void copyFile(String fileId, String destinationFolderId, Optional<String> newName) throws IOException {
         File newFileReference = new File();
         newFileReference.setParents(Collections.singletonList(destinationFolderId));
+        newName.ifPresent(newFileReference::setName);
         service.files()
                 .copy(fileId, newFileReference)
                 .setSupportsTeamDrives(true)

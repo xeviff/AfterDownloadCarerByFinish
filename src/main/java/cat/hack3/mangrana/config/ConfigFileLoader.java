@@ -22,12 +22,14 @@ public class ConfigFileLoader {
     private static final String SONARR_HOST_KEY = "sonarr_api_host";
     private static final String DOWNLOADS_TD_ID_KEY = "downloads_team_drive_id";
     private static final String MOVIES_TD_ID_KEY = "movies_team_drive_id";
+    private static final String SERIES_TD_ID_KEY = "series_team_drive_id";
     private final String radarrApiKey;
     private final String radarrHost;
     private final String sonarrApiKey;
     private final String sonarrHost;
     private final String downloadsTDid;
     private final String moviesTDid;
+    private final String seriesTDid;
 
     public ConfigFileLoader() throws IncorrectWorkingReferencesException {
         log("Loading values from the config file...");
@@ -55,6 +57,9 @@ public class ConfigFileLoader {
             moviesTDid = Optional.ofNullable(
                             config.string(MOVIES_TD_ID_KEY))
                     .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the movies_team_drive_id :(") );
+            seriesTDid = Optional.ofNullable(
+                            config.string(SERIES_TD_ID_KEY))
+                    .orElseThrow(() -> new IncorrectWorkingReferencesException("Couldn't retrieve the series_team_drive_id :(") );
         } catch (IOException e) {
             throw new IncorrectWorkingReferencesException("couldn't find the config file :(");
         }
@@ -82,5 +87,8 @@ public class ConfigFileLoader {
     }
     public String getMoviesTDid() {
         return moviesTDid;
+    }
+    public String getSeriesTDid() {
+        return seriesTDid;
     }
 }

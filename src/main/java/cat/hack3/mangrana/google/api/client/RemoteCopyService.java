@@ -28,7 +28,7 @@ public class RemoteCopyService {
         if (Objects.nonNull(videoFile)) {
             String destinationFolderId = resolveFolderIdByPath(destinationFullPath);
             googleDriveApiGateway
-                    .copyFile(videoFile.getId(), destinationFolderId);
+                    .copyFile(videoFile.getId(), destinationFolderId, Optional.empty());
             log(">> copied successfully!! :D ");
             log("fileName: "+downloadedFileName);
             log("fileId: "+videoFile.getId());
@@ -74,4 +74,9 @@ public class RemoteCopyService {
                 .toString();
     }
 
+    public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFolderName, String seasonFolderName) throws IOException {
+        File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getDownloadsTDid());
+        File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getSeriesTDid());
+        googleDriveApiGateway.copyFile(downloadedSeasonFolder.getId(), destinationSerieFolder.getId(), Optional.of(seasonFolderName));
+    }
 }
