@@ -27,8 +27,8 @@ public class DownloadedItemsHandler {
     }
 
     private void process() {
-        //TODO get and handle the completed download that supposedly triggered this java program -- after that, check the "externally downloaded"
-        //radarrFailedDownloadsHandler.handle();
+        //TODO get and handle the completed download that supposedly triggered this java program -- after that, check the "failed imports"
+        radarrFailedDownloadsHandler.handle();
         sonarrFailedDownloadsHandler.handle();
         log("that's all, folks");
         logDate();

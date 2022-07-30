@@ -93,7 +93,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        cat.hack3.mangrana.workers.DownloadedItemsHandler
+                                        cat.hack3.mangrana.downloads.DownloadedItemsHandler
                                     </mainClass>
                                 </manifest>
                             </archive>
