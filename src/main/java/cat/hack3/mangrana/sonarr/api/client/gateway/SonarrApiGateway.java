@@ -5,14 +5,17 @@ import cat.hack3.mangrana.radarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
 import cat.hack3.mangrana.utils.rest.APIProxyBuilderSingleton;
 
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_API_KEY;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_HOST;
+
 public class SonarrApiGateway {
 
     private final String apiKey;
     private final SonarrAPIInterface proxy;
 
     public SonarrApiGateway(ConfigFileLoader config) {
-        apiKey = config.getSonarrApiKey();
-        proxy = APIProxyBuilderSingleton.getSonarrInterface(config.getSonarrHost());
+        apiKey = config.getConfig(SONARR_API_KEY);
+        proxy = APIProxyBuilderSingleton.getSonarrInterface(config.getConfig(SONARR_HOST));
     }
 
     public SonarrQueue getQueue() {

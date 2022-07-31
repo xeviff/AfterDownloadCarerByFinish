@@ -6,6 +6,8 @@ import cat.hack3.mangrana.utils.ClassGeneratorFromJson;
 
 import java.io.IOException;
 
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
+
 /**
  * @deprecated Once the generated classes for client schema are located in the project, this utility is not needed anymore
  */
@@ -24,8 +26,8 @@ public class ClientSchemaGenerator {
 
     private void generateRadarrClientSchema() throws  IOException {
         generate(
-                configFileLoader.getRadarrHost(),
-                configFileLoader.getRadarrApiKey(),
+                configFileLoader.getConfig(RADARR_HOST),
+                configFileLoader.getConfig(RADARR_API_KEY),
                 "/api/v3/queue?includeMovie=true?apikey=",
                 "cat.hack3.mangrana.radarr.api.schema.queue",
                 "QueueResourcePagingResource");
@@ -33,18 +35,18 @@ public class ClientSchemaGenerator {
 
     private void generateSonarrQueueClientSchema() throws  IOException {
         generate(
-                configFileLoader.getSonarrHost(),
+                configFileLoader.getConfig(SONARR_HOST),
                 "/api/v3/queue?apikey=",
-                configFileLoader.getSonarrApiKey(),
+                configFileLoader.getConfig(SONARR_API_KEY),
                 "cat.hack3.mangrana.sonarr.api.schema.queue",
                 "SonarrQueue");
     }
 
     private void generateSonarrSeriesClientSchema() throws  IOException {
         generate(
-                configFileLoader.getSonarrHost(),
+                configFileLoader.getConfig(SONARR_HOST),
                 "/api/v3/series/2220?apikey=",
-                configFileLoader.getSonarrApiKey(),
+                configFileLoader.getConfig(SONARR_API_KEY),
                 "cat.hack3.mangrana.sonarr.api.schema.series",
                 "SonarrSeries");
     }
