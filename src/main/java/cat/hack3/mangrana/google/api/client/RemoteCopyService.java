@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.FOLDER;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
 import static cat.hack3.mangrana.utils.Output.log;
@@ -26,7 +27,7 @@ public class RemoteCopyService {
 
     public void copyVideoFile(String downloadedFileName, String destinationFullPath) throws IOException {
         File videoFile = googleDriveApiGateway
-                .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getDownloadsTDid());
+                .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TD_ID));
         if (Objects.nonNull(videoFile)) {
             String destinationFolderId = resolveFolderIdByPath(destinationFullPath);
             googleDriveApiGateway
@@ -59,7 +60,7 @@ public class RemoteCopyService {
 
     private String searchFolderByName(String destinationFolderName) throws IOException {
         return googleDriveApiGateway
-                .lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getMoviesTDid())
+                .lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(MOVIES_TD_ID))
                 .getId();
     }
 
@@ -77,8 +78,8 @@ public class RemoteCopyService {
     }
 
     public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFolderName, String seasonFolderName) throws IOException {
-        File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getDownloadsTDid());
-        File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getSeriesTDid());
+        File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TD_ID));
+        File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(SERIES_TD_ID));
         File seasonFolder = googleDriveApiGateway.createFolder(seasonFolderName, destinationSerieFolder.getId());
         List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenById(downloadedSeasonFolder.getId(), false);
         seasonEpisodesGFiles.forEach(episodeFile ->
