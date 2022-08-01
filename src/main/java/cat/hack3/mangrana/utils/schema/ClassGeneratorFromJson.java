@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.utils;
+package cat.hack3.mangrana.utils.schema;
 
 import com.sun.codemodel.JCodeModel;
 import org.jsonschema2pojo.*;
