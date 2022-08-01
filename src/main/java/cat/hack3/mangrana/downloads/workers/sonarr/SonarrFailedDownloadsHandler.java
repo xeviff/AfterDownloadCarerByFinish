@@ -4,6 +4,7 @@ import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.sonarr.bean.Season;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
+import cat.hack3.mangrana.plex.url.PlexCommandLauncher;
 import cat.hack3.mangrana.radarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.sonarr.api.schema.queue.Record;
@@ -23,11 +24,13 @@ public class SonarrFailedDownloadsHandler {
 
     SonarrApiGateway sonarrApiGateway;
     RemoteCopyService copyService;
+    PlexCommandLauncher plexCommander;
 
 
     public SonarrFailedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
+        plexCommander = new PlexCommandLauncher(configFileLoader);
     }
 
     public void handle () {
@@ -70,11 +73,21 @@ public class SonarrFailedDownloadsHandler {
 
     private void handleSeason(Season season) {
         try {
-            SonarrSerie serie = sonarrApiGateway.getSerieById(season.getSeriesId());
+            log("getting sonarr serie: "+season.getSerieId());
+            SonarrSerie serie = sonarrApiGateway.getSerieById(season.getSerieId());
+            log("copying serie "+serie.getTitle()+" to "+serie.getPath());
             copyService.copySeasonFromDownloadToItsLocation(
                     season.getDownloadedFolderName(),
-                    serie.getPath().substring(serie.getPath().lastIndexOf('/')+1),
+                    serie.getPath(),
                     getSeasonFolderName(season.getDownloadedFolderName()));
+            log("refreshing sonarr serie...");
+            sonarrApiGateway.refreshSerie(serie.getId());
+            log("deleting queue element/s "+season.getQueueItemId());
+            sonarrApiGateway.deleteQueueElement(season.getQueueItemId());
+            String plexSeriePath = serie.getPath().replaceFirst("/tv", "/mnt/mangrana_series");
+            log("refreshing plex path: "+plexSeriePath);
+            plexCommander.scanByPath(plexSeriePath);
+            log("season handled!");
         } catch (IncorrectWorkingReferencesException | IOException e) {
             log("could not handle the season because of "+e.getMessage());
             e.printStackTrace();
@@ -90,8 +103,7 @@ public class SonarrFailedDownloadsHandler {
     }
 
     private Season buildSeason(Map.Entry<String, List<Record>> entry) {
-        Record rc = entry.getValue().get(0);
-        return new Season(entry.getKey(), rc.getSeriesId(), rc.getOutputPath());
+        return new Season(entry.getKey(), entry.getValue().get(0));
     }
 
 }

@@ -1,19 +1,25 @@
 package cat.hack3.mangrana.downloads.workers.sonarr.bean;
 
+import cat.hack3.mangrana.sonarr.api.schema.queue.Record;
+
 public class Season {
     private final String downloadedFolderName;
-    private final Integer seriesId;
+    private final Record rcd;
 
-    public Season(String downloadedFolderName, Integer seriesId, String downloadPath) {
-        this.downloadedFolderName = downloadedFolderName;
-        this.seriesId = seriesId;
+    public Season(String title, Record rcd) {
+        this.downloadedFolderName = title;
+        this.rcd = rcd;
     }
 
     public String getDownloadedFolderName() {
         return downloadedFolderName;
     }
 
-    public Integer getSeriesId() {
-        return seriesId;
+    public Integer getSerieId() {
+        return rcd.getSeriesId();
+    }
+
+    public Integer getQueueItemId() {
+        return rcd.getId();
     }
 }

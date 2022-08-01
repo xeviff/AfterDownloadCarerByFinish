@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.sonarr.api.client.gateway;
 
 import cat.hack3.mangrana.radarr.api.schema.series.SonarrSerie;
+import cat.hack3.mangrana.sonarr.api.schema.command.RefreshSerieCommand;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
 import cat.hack3.mangrana.utils.rest.APIInterface;
 
@@ -18,9 +19,19 @@ public interface SonarrAPIInterface extends APIInterface {
     @Produces({ MediaType.APPLICATION_JSON })
     SonarrQueue getQueue(@QueryParam("apikey") String apikey);
 
+    @DELETE
+    @Path("/queue/{id}")
+    @Produces({ MediaType.APPLICATION_JSON })
+    void deleteQueueElement(@PathParam("id") Integer idElement, @QueryParam("apikey") String apikey);
+
     @GET
     @Path("/series/{id}")
     @Produces({ MediaType.APPLICATION_JSON })
     SonarrSerie getSerieById(@PathParam("id") Integer idSerie, @QueryParam("apikey") String apikey);
+
+    @POST
+    @Path("/command")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    void refreshSeriesCommand(RefreshSerieCommand command, @QueryParam("apikey") String apikey);
 
 }
