@@ -27,7 +27,7 @@ public class RemoteCopyService {
 
     public void copyVideoFile(String downloadedFileName, String destinationFullPath) throws IOException {
         File videoFile = googleDriveApiGateway
-                .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TD_ID));
+                .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
         if (Objects.nonNull(videoFile)) {
             String destinationFolderId = resolveFolderIdByPath(destinationFullPath);
             googleDriveApiGateway
@@ -60,7 +60,7 @@ public class RemoteCopyService {
 
     private String searchFolderByName(String destinationFolderName) throws IOException {
         return googleDriveApiGateway
-                .lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(MOVIES_TD_ID))
+                .lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(MOVIES_TEAM_DRIVE_ID))
                 .getId();
     }
 
@@ -77,9 +77,17 @@ public class RemoteCopyService {
                 .toString();
     }
 
-    public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFolderName, String seasonFolderName) throws IOException {
-        File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TD_ID));
-        File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(SERIES_TD_ID));
+    public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException {
+        File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+        String destinationFolderName = destinationFullPath.substring(destinationFullPath.lastIndexOf('/')+1);
+        File destinationSerieFolder = null;
+        try {
+            destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
+        } catch (NoSuchElementException e) {
+            String parentDirectory = Paths.get(destinationFullPath).getParent().getFileName().toString();
+            File seriesFolderParent = googleDriveApiGateway.lookupElementByName(parentDirectory, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
+            destinationSerieFolder = googleDriveApiGateway.createFolder(destinationFolderName, seriesFolderParent.getId());
+        }
         File seasonFolder = googleDriveApiGateway.createFolder(seasonFolderName, destinationSerieFolder.getId());
         List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenById(downloadedSeasonFolder.getId(), false);
         seasonEpisodesGFiles.forEach(episodeFile ->
