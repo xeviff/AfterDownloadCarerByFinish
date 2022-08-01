@@ -1,8 +1,7 @@
-package cat.hack3.mangrana.radarr.api.schema;
+package cat.hack3.mangrana.utils.schema;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
-import cat.hack3.mangrana.utils.ClassGeneratorFromJson;
 
 import java.io.IOException;
 
@@ -26,7 +25,7 @@ public class ClientSchemaGenerator {
 
     private void generateRadarrClientSchema() throws  IOException {
         generate(
-                configFileLoader.getConfig(RADARR_HOST),
+                configFileLoader.getConfig(RADARR_API_HOST),
                 configFileLoader.getConfig(RADARR_API_KEY),
                 "/api/v3/queue?includeMovie=true?apikey=",
                 "cat.hack3.mangrana.radarr.api.schema.queue",
@@ -35,7 +34,7 @@ public class ClientSchemaGenerator {
 
     private void generateSonarrQueueClientSchema() throws  IOException {
         generate(
-                configFileLoader.getConfig(SONARR_HOST),
+                configFileLoader.getConfig(SONARR_API_HOST),
                 "/api/v3/queue?apikey=",
                 configFileLoader.getConfig(SONARR_API_KEY),
                 "cat.hack3.mangrana.sonarr.api.schema.queue",
@@ -44,7 +43,7 @@ public class ClientSchemaGenerator {
 
     private void generateSonarrSeriesClientSchema() throws  IOException {
         generate(
-                configFileLoader.getConfig(SONARR_HOST),
+                configFileLoader.getConfig(SONARR_API_HOST),
                 "/api/v3/series/2220?apikey=",
                 configFileLoader.getConfig(SONARR_API_KEY),
                 "cat.hack3.mangrana.sonarr.api.schema.series",

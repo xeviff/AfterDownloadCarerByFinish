@@ -5,7 +5,7 @@ import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 import cat.hack3.mangrana.utils.rest.APIProxyBuilderSingleton;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.RADARR_API_KEY;
-import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.RADARR_HOST;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.RADARR_API_HOST;
 import static cat.hack3.mangrana.utils.Output.log;
 
 public class RadarrApiGateway {
@@ -15,7 +15,7 @@ public class RadarrApiGateway {
 
     public RadarrApiGateway(ConfigFileLoader config) {
         apiKey = config.getConfig(RADARR_API_KEY);
-        proxy = APIProxyBuilderSingleton.getRadarrInterface(config.getConfig(RADARR_HOST));
+        proxy = APIProxyBuilderSingleton.getRadarrInterface(config.getConfig(RADARR_API_HOST));
     }
 
     public QueueResourcePagingResource getQueue() {

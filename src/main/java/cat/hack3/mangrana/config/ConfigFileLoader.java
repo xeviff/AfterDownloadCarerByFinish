@@ -19,16 +19,16 @@ public class ConfigFileLoader {
 
     public enum ProjectConfiguration {
         RADARR_API_KEY,
-        RADARR_HOST,
+        RADARR_API_HOST,
         SONARR_API_KEY,
-        SONARR_HOST,
-        DOWNLOADS_TD_ID,
-        MOVIES_TD_ID,
-        SERIES_TD_ID,
+        SONARR_API_HOST,
+        DOWNLOADS_TEAM_DRIVE_ID,
+        MOVIES_TEAM_DRIVE_ID,
+        SERIES_TEAM_DRIVE_ID,
         PLEX_TOKEN,
         PLEX_URL,
         PLEX_SECTION_REFRESH_URI,
-        PLEX_MUSIC_SECTION_ID
+        PLEX_SERIES_SECTION_ID
     }
 
     private final EnumMap<ProjectConfiguration, String> configurationsMap;

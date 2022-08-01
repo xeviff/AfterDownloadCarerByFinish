@@ -5,3 +5,6 @@ services:
     container_name: mangrana_java_after_download
     image: after-download-carer:latest
     build: .
+    volumes:
+      - ./config:/config
+      - ./tokens:/tokens
