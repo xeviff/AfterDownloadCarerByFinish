@@ -22,7 +22,7 @@ public class PlexCommandLauncher {
     }
 
     public void scanByPath(String fullDestinationPath) {
-        log("refreshing artist located on "+fullDestinationPath);
+        log("refreshing plex path: "+fullDestinationPath);
         String plexRefreshURL = getPlexRefreshURL();
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
             HttpUriRequest httpGET = RequestBuilder.get()

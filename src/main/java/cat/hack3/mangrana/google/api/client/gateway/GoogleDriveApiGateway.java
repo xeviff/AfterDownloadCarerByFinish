@@ -51,14 +51,28 @@ public class GoogleDriveApiGateway {
         }
     }
 
-    public List<File> getChildrenById(String id, boolean onlyFolders)  {
-        List<File> fullFileList = new ArrayList<>();
-
+    public List<File> getChildrenFromParent(File parent, boolean onlyFolders)  {
         String query =
                 "trashed=false and "+
                         (onlyFolders ? "mimeType = 'application/vnd.google-apps.folder' and " : "")+
-                        "'"+id+"' in parents";
+                        "'"+parent.getId()+"' in parents";
 
+        return getChildrenCommonCall(query);
+    }
+
+    public File getChildFromParentByName(String name, File parent, boolean onlyFolder)  {
+        String query = "name = '" + name.replace("'","\\'") + "'" +
+                " and trashed=false and "+
+                        (onlyFolder ? "mimeType = 'application/vnd.google-apps.folder' and " : "")+
+                        "'"+parent.getId()+"' in parents";
+        List<File> children = getChildrenCommonCall(query);
+        if (children.isEmpty()) throw new NoSuchElementException("no elements in the list xO");
+        if (children.size() > 1) log("WARNING: more than one element here not expected");
+        return children.get(0);
+    }
+
+    private List<File> getChildrenCommonCall(String query) {
+        List<File> fullFileList = new ArrayList<>();
         String pageToken = null;
         do {
             try {

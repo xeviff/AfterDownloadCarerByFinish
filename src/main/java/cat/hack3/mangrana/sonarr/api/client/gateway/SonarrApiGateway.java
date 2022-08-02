@@ -8,6 +8,7 @@ import cat.hack3.mangrana.utils.rest.APIProxyBuilderSingleton;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_API_KEY;
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_API_HOST;
+import static cat.hack3.mangrana.utils.Output.log;
 
 public class SonarrApiGateway {
 
@@ -24,14 +25,17 @@ public class SonarrApiGateway {
     }
 
     public void deleteQueueElement(Integer idElement) {
+        log("deleting queue element/s "+idElement);
         proxy.deleteQueueElement(idElement, false, apiKey);
     }
 
     public SonarrSerie getSerieById(Integer seriesId) {
+        log("getting sonarr serie: "+seriesId);
         return proxy.getSerieById(seriesId, apiKey);
     }
 
     public void refreshSerie(Integer seriesId) {
+        log("refreshing sonarr serie...");
         proxy.refreshSeriesCommand(new RefreshSerieCommand(seriesId), apiKey);
     }
 

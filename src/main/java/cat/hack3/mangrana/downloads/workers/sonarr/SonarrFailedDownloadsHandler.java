@@ -60,7 +60,6 @@ public class SonarrFailedDownloadsHandler {
                         .collect(Collectors.toList()));
     }
 
-
     private void handleSeasons(List<Season> recordsByTitle) {
         log("going to handle seasons");
         recordsByTitle.forEach(this::handleSeason);
@@ -68,38 +67,64 @@ public class SonarrFailedDownloadsHandler {
 
     private void handleSingleEpisodes(List<Record> episodeRecords) {
         log("going to handle episodes");
-        episodeRecords.forEach(ep -> log(ep.getTitle()));
+        episodeRecords.forEach(this::handleEpisode);
     }
 
     private void handleSeason(Season season) {
         try {
-            log("getting sonarr serie: "+season.getSerieId());
             SonarrSerie serie = sonarrApiGateway.getSerieById(season.getSerieId());
             log("copying serie "+serie.getTitle()+" to "+serie.getPath());
             copyService.copySeasonFromDownloadToItsLocation(
                     season.getDownloadedFolderName(),
                     serie.getPath(),
-                    getSeasonFolderName(season.getDownloadedFolderName()));
-            log("refreshing sonarr serie...");
-            sonarrApiGateway.refreshSerie(serie.getId());
-            log("deleting queue element/s "+season.getQueueItemId());
-            sonarrApiGateway.deleteQueueElement(season.getQueueItemId());
-            String plexSeriePath = serie.getPath().replaceFirst("/tv", "/mnt/mangrana_series");
-            log("refreshing plex path: "+plexSeriePath);
-            plexCommander.scanByPath(plexSeriePath);
+                    getSeasonFolderNameFromSeason(season.getDownloadedFolderName())
+            );
+            refreshSerieInSonarrAndPlex(serie, season.getQueueItemId());
             log("season handled!");
-        } catch (IncorrectWorkingReferencesException | IOException e) {
+        } catch (Exception e) {
             log("could not handle the season because of "+e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private String getSeasonFolderName (String folderName) throws IncorrectWorkingReferencesException {
+    private void handleEpisode(Record episodeRecord) {
+        try {
+            String absolutePathWithFile = episodeRecord.getOutputPath();
+            SonarrSerie serie = sonarrApiGateway.getSerieById(episodeRecord.getSeriesId());
+            copyService.copyEpisodeFromDownloadToItsLocation(
+                    absolutePathWithFile.substring(absolutePathWithFile.lastIndexOf('/')+1),
+                    serie.getPath(),
+                    getSeasonFolderNameFromEpisode(episodeRecord.getTitle())
+            );
+            refreshSerieInSonarrAndPlex(serie, episodeRecord.getId());
+            log("episode handled!");
+        } catch (Exception e) {
+            log("could not handle the episode because of "+e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void refreshSerieInSonarrAndPlex(SonarrSerie serie, Integer queueElementId) {
+        sonarrApiGateway.refreshSerie(serie.getId());
+        sonarrApiGateway.deleteQueueElement(queueElementId);
+        String plexSeriePath = serie.getPath().replaceFirst("/tv", "/mnt/mangrana_series");
+        plexCommander.scanByPath(plexSeriePath);
+    }
+
+    private String getSeasonFolderNameFromSeason(String seasonFolderName) throws IncorrectWorkingReferencesException {
         String season = Optional.ofNullable(
-                StringCaptor.getMatchingSubstring(folderName, "(S\\d{2})"))
+                StringCaptor.getMatchingSubstring(seasonFolderName, "(S\\d{2})"))
                 .orElseThrow(() ->
-                        new IncorrectWorkingReferencesException("Couldn't determinate the season from: "+folderName));
+                        new IncorrectWorkingReferencesException("Couldn't determinate the season from: "+seasonFolderName));
         return season.replaceFirst("S", "Temporada ");
+    }
+
+    private String getSeasonFolderNameFromEpisode(String episodeFileName) throws IncorrectWorkingReferencesException {
+        String episodeInfo = Optional.ofNullable(
+                        StringCaptor.getMatchingSubstring(episodeFileName, "(S\\d{2}E\\d{2})"))
+                .orElseThrow(() ->
+                        new IncorrectWorkingReferencesException("Couldn't determinate the episode from: "+episodeFileName));
+        return "Temporada ".concat(episodeInfo.substring(1,3));
     }
 
     private Season buildSeason(Map.Entry<String, List<Record>> entry) {

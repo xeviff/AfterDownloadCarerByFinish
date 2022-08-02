@@ -89,9 +89,23 @@ public class RemoteCopyService {
             destinationSerieFolder = googleDriveApiGateway.createFolder(destinationFolderName, seriesFolderParent.getId());
         }
         File seasonFolder = googleDriveApiGateway.createFolder(seasonFolderName, destinationSerieFolder.getId());
-        List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenById(downloadedSeasonFolder.getId(), false);
+        List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenFromParent(downloadedSeasonFolder, false);
         seasonEpisodesGFiles.forEach(episodeFile ->
                 copySeasonEpisode(episodeFile, seasonFolder.getId()));
+    }
+
+    public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException {
+        log("copying episode "+downloadedFileName+" to "+destinationFullPath);
+        File downloadedFile = googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+        String destinationFolderName = destinationFullPath.substring(destinationFullPath.lastIndexOf('/')+1);
+        File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
+        File seasonFolder;
+        try {
+            seasonFolder = googleDriveApiGateway.getChildFromParentByName(seasonFolderName, destinationSerieFolder, true);
+        } catch (NoSuchElementException e) {
+            seasonFolder = googleDriveApiGateway.createFolder(seasonFolderName, destinationSerieFolder.getId());
+        }
+        copySeasonEpisode(downloadedFile, seasonFolder.getId());
     }
 
     private void copySeasonEpisode(File episodeFile, String destinationSerieFolder) {
