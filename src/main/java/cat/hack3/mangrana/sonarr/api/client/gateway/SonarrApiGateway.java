@@ -22,9 +22,10 @@ public class SonarrApiGateway {
     public SonarrQueue getQueue() {
         return proxy.getQueue(apiKey);
     }
-
+    @Deprecated
     public void deleteQueueElement(Integer idElement) {
-        proxy.deleteQueueElement(idElement, apiKey);
+        boolean isDeletingFromDownloadClient = true;
+        if (!isDeletingFromDownloadClient) proxy.deleteQueueElement(idElement, apiKey);
     }
 
     public SonarrSerie getSerieById(Integer seriesId) {
