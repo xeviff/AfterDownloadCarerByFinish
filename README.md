@@ -13,7 +13,7 @@ Did you ever felt angry with those tons of failed imports? Success identifing th
 
 So, when we realised something went wrong we enter to Sonarr, we identify those warning in the Queue, we click manually to import every failed element, repeating the process for ever season and episode downloaded... 
 
-Fucking frustrating, to be honest.
+Quite bothering...
 
 ### The solution
 So, my application comes to the rescue identifying those failed imports, group by season and copy to the proper location. By the way, by ***Google Drive Cloud copy***, so the Sonarr server doesn't have to burn its CPU and bandwith downloading and uploading those GB via rclone mounted folders 🥰 
