@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.radarr.api.client.gateway;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.radarr.api.client.schema.command.RefreshMoviesCommand;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 import cat.hack3.mangrana.utils.rest.APIProxyBuilderSingleton;
 
@@ -25,6 +26,11 @@ public class RadarrApiGateway {
     public void removeQueueItem(int itemId) {
         proxy.removeQueueItem(itemId, false, apiKey);
         log("removed item from queue successfully: "+itemId);
+    }
+
+    public void refreshMovie(int movieId) {
+        proxy.refreshMoviesCommand(new RefreshMoviesCommand(movieId), apiKey);
+        log("refreshed movie with id "+movieId);
     }
 
 }

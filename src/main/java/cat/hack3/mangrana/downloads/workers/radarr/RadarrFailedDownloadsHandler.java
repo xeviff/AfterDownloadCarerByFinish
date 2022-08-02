@@ -35,6 +35,8 @@ public class RadarrFailedDownloadsHandler {
             copyService
                     .copyVideoFile(queueItem.getTitle(), queueItem.getMovie().getPath());
             radarrApiGateway
+                    .refreshMovie(queueItem.getMovieId());
+            radarrApiGateway
                     .removeQueueItem(queueItem.getId());
         } catch (IOException e) {
            log("could not copy the file :( "+queueItem.getTitle());
