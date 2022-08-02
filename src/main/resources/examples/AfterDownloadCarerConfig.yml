@@ -4,4 +4,8 @@ sonarr_api_key: 1y2u2u3u4ui4o5o5hi
 sonarr_api_host: https://your-sonarr.domain.is
 downloads_team_drive_id: 23lk4kjh5k234thanks
 movies_team_drive_id: 23oikj45lhello
-
+series_team_drive_id: 23oikj45lhello
+plex_token: q1Ej435345E2zJj
+plex_url: https://your-plex.domain.is
+plex_section_refresh_uri: /library/sections/{section_id}/refresh
+plex_series_section_id: 40
