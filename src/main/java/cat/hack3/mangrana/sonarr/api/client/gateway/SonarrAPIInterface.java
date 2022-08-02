@@ -22,7 +22,7 @@ public interface SonarrAPIInterface extends APIInterface {
     @DELETE
     @Path("/queue/{id}")
     @Produces({ MediaType.APPLICATION_JSON })
-    void deleteQueueElement(@PathParam("id") Integer idElement, @QueryParam("apikey") String apikey);
+    void deleteQueueElement(@PathParam("id") Integer idElement, @QueryParam("removeFromClient") boolean removeFromClient, @QueryParam("apikey") String apikey);
 
     @GET
     @Path("/series/{id}")
