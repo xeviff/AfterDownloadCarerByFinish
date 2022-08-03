@@ -73,7 +73,6 @@ public class SonarrFailedDownloadsHandler {
     private void handleSeason(Season season) {
         try {
             SonarrSerie serie = sonarrApiGateway.getSerieById(season.getSerieId());
-            log("copying serie "+serie.getTitle()+" to "+serie.getPath());
             copyService.copySeasonFromDownloadToItsLocation(
                     season.getDownloadedFolderName(),
                     serie.getPath(),
