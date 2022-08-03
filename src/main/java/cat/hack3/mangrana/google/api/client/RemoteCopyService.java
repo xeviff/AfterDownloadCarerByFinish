@@ -2,6 +2,7 @@ package cat.hack3.mangrana.google.api.client;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
+import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class RemoteCopyService {
         File videoFile = googleDriveApiGateway
                 .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
         if (Objects.nonNull(videoFile)) {
-            File destinationFolder = resolveFolderByPath(destinationFullPath);
+            File destinationFolder = getOrCreateMovieFolderByPath(destinationFullPath);
             googleDriveApiGateway
                     .copyFile(videoFile.getId(), destinationFolder.getId());
             log(">> copied successfully!! :D ");
@@ -42,14 +43,14 @@ public class RemoteCopyService {
         }
     }
 
-    private File resolveFolderByPath(String destinationFullPath) throws IOException {
-        String destinationFolderName = destinationFullPath.substring(destinationFullPath.lastIndexOf("/")+1);
+    private File getOrCreateMovieFolderByPath(String destinationFullPath) throws IOException {
+        String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         try {
             return searchFolderByName(destinationFolderName);
         } catch (NoSuchElementException e) {
             log("failed finding the folder but we'll try to create it");
             try {
-                return createFolderByParentName(getParentDirectoryFromAbsolute(destinationFullPath), destinationFolderName);
+                return createFolderByParentName(PathUtils.getParentFromFullPath(destinationFullPath), destinationFolderName);
             } catch (IOException e2) {
                 log("couldn't create the folder as well, so I surrender");
                 throw e2;
@@ -60,7 +61,7 @@ public class RemoteCopyService {
     public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException {
         log("copying season <"+downloadedFolderName+"> to <"+destinationFullPath+">");
         File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
-        String destinationFolderName = destinationFullPath.substring(destinationFullPath.lastIndexOf('/')+1);
+        String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
         List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenFromParent(downloadedSeasonFolder, false);
@@ -71,7 +72,7 @@ public class RemoteCopyService {
     public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException {
         log("copying episode <"+downloadedFileName+"> to <"+destinationFullPath+">");
         File downloadedFile = googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
-        String destinationSerieFolderName = destinationFullPath.substring(destinationFullPath.lastIndexOf('/')+1);
+        String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationSerieFolderName, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
         copySeasonEpisode(downloadedFile, seasonFolder.getId());
@@ -91,7 +92,7 @@ public class RemoteCopyService {
         try {
             destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
         } catch (NoSuchElementException e) {
-            String parentDirectory = getParentDirectoryFromAbsolute(destinationFullPath);
+            String parentDirectory = PathUtils.getParentFromFullPath(destinationFullPath);
             File seriesFolderParent = googleDriveApiGateway.lookupElementByName(parentDirectory, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
             destinationSerieFolder = googleDriveApiGateway.createFolder(destinationFolderName, seriesFolderParent.getId());
         }
@@ -116,14 +117,6 @@ public class RemoteCopyService {
     private File createFolderByParentName(String parentDirectory, String destinationFolderName) throws IOException {
         File parentFolder = searchFolderByName(parentDirectory);
         return googleDriveApiGateway.createFolder(destinationFolderName, parentFolder.getId());
-    }
-
-    private String getParentDirectoryFromAbsolute(String absolutePath){
-        return Paths
-                .get(absolutePath)
-                .getParent()
-                .getFileName()
-                .toString();
     }
 
 }
