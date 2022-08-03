@@ -1,5 +1,5 @@
 
-package cat.hack3.mangrana.radarr.api.schema.series;
+package cat.hack3.mangrana.sonarr.api.schema.series;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

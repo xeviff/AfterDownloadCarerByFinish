@@ -1,5 +1,5 @@
 
-package cat.hack3.mangrana.radarr.api.schema.series;
+package cat.hack3.mangrana.sonarr.api.schema.series;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,7 +35,7 @@ public class Statistics__1 {
     @JsonProperty("totalEpisodeCount")
     private Integer totalEpisodeCount;
     @JsonProperty("sizeOnDisk")
-    private Long sizeOnDisk;
+    private Integer sizeOnDisk;
     @JsonProperty("releaseGroups")
     private List<Object> releaseGroups = new ArrayList<Object>();
     @JsonProperty("percentOfEpisodes")
@@ -104,16 +104,16 @@ public class Statistics__1 {
     }
 
     @JsonProperty("sizeOnDisk")
-    public Long getSizeOnDisk() {
+    public Integer getSizeOnDisk() {
         return sizeOnDisk;
     }
 
     @JsonProperty("sizeOnDisk")
-    public void setSizeOnDisk(Long sizeOnDisk) {
+    public void setSizeOnDisk(Integer sizeOnDisk) {
         this.sizeOnDisk = sizeOnDisk;
     }
 
-    public Statistics__1 withSizeOnDisk(Long sizeOnDisk) {
+    public Statistics__1 withSizeOnDisk(Integer sizeOnDisk) {
         this.sizeOnDisk = sizeOnDisk;
         return this;
     }
