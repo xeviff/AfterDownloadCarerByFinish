@@ -18,6 +18,7 @@ public class ConfigFileLoader {
     private static final String CONFIG_FILE = "AfterDownloadCarerConfig.yml";
 
     public enum ProjectConfiguration {
+        MANAGE_FAILED_DOWNLOADS,
         RADARR_API_KEY,
         RADARR_API_HOST,
         SONARR_API_KEY,

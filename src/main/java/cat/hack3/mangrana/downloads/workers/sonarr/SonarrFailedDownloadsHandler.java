@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.sonarr.bean.Season;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 import static cat.hack3.mangrana.utils.Output.log;
 import static java.util.stream.Collectors.groupingBy;
 
-public class SonarrFailedDownloadsHandler {
+public class SonarrFailedDownloadsHandler implements Handler {
 
     SonarrApiGateway sonarrApiGateway;
     RemoteCopyService copyService;

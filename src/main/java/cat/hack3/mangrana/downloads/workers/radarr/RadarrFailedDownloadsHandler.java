@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.radarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.radarr.api.client.gateway.RadarrApiGateway;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
@@ -10,7 +11,7 @@ import java.io.IOException;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
-public class RadarrFailedDownloadsHandler {
+public class RadarrFailedDownloadsHandler implements Handler {
 
     RadarrApiGateway radarrApiGateway;
     RemoteCopyService copyService;

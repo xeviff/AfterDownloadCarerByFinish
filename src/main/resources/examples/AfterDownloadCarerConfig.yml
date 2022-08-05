@@ -1,3 +1,4 @@
+manage_failed_downloads: false
 radarr_api_key: 1y2u2u3u4ui4o5o5hi
 radarr_api_host: https://your-radarr.domain.is
 sonarr_api_key: 1y2u2u3u4ui4o5o5hi
