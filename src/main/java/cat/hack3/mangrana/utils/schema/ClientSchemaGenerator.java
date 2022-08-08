@@ -20,9 +20,10 @@ public class ClientSchemaGenerator {
     }
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
-         new ClientSchemaGenerator().generateSonarrSeriesClientSchema();
+         new ClientSchemaGenerator().generateSonarrHistoryClientSchema();
     }
 
+    @SuppressWarnings("unused")
     private void generateRadarrClientSchema() throws  IOException {
         generate(
                 configFileLoader.getConfig(RADARR_API_HOST),
@@ -32,6 +33,7 @@ public class ClientSchemaGenerator {
                 "QueueResourcePagingResource");
     }
 
+    @SuppressWarnings("unused")
     private void generateSonarrQueueClientSchema() throws  IOException {
         generate(
                 configFileLoader.getConfig(SONARR_API_HOST),
@@ -41,6 +43,7 @@ public class ClientSchemaGenerator {
                 "SonarrQueue");
     }
 
+    @SuppressWarnings("unused")
     private void generateSonarrSeriesClientSchema() throws  IOException {
         generate(
                 configFileLoader.getConfig(SONARR_API_HOST),
@@ -48,6 +51,15 @@ public class ClientSchemaGenerator {
                 configFileLoader.getConfig(SONARR_API_KEY),
                 "cat.hack3.mangrana.sonarr.api.schema.series",
                 "SonarrSeries");
+    }
+
+    private void generateSonarrHistoryClientSchema() throws  IOException {
+        generate(
+                configFileLoader.getConfig(SONARR_API_HOST),
+                "/api/v3/history?sortKey=date&apikey=",
+                configFileLoader.getConfig(SONARR_API_KEY),
+                "cat.hack3.mangrana.sonarr.api.schema.history",
+                "SonarrHistory");
     }
 
     private void generate(String host, String uri, String apiKey, String pckg, String className) throws IOException {

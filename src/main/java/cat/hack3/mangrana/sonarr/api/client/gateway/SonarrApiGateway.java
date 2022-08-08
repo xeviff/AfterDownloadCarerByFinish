@@ -39,4 +39,8 @@ public class SonarrApiGateway {
         proxy.refreshSeriesCommand(new RefreshSerieCommand(seriesId), apiKey);
     }
 
+    public void getHistory () {
+        proxy.getHistory("date", "desc", 200, 1, apiKey);
+    }
+
 }
