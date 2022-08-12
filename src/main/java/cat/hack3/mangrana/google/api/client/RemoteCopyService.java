@@ -79,6 +79,7 @@ public class RemoteCopyService {
     }
 
     private void copySeasonEpisode(File episodeFile, String destinationSerieFolder) {
+        log("copying "+episodeFile.getName()+" to "+destinationSerieFolder);
         try {
             googleDriveApiGateway.copyFile(episodeFile.getId(), destinationSerieFolder);
         } catch (IOException e) {

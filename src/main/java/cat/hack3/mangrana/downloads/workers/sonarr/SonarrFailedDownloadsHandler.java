@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
+import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 import static java.util.stream.Collectors.groupingBy;
 
 public class SonarrFailedDownloadsHandler implements Handler {
@@ -26,12 +28,14 @@ public class SonarrFailedDownloadsHandler implements Handler {
     SonarrApiGateway sonarrApiGateway;
     RemoteCopyService copyService;
     PlexCommandLauncher plexCommander;
+    SerieRefresher serieRefresher;
 
 
     public SonarrFailedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         plexCommander = new PlexCommandLauncher(configFileLoader);
+        serieRefresher = new SerieRefresher(configFileLoader);
     }
 
     public void handle () {
@@ -79,7 +83,7 @@ public class SonarrFailedDownloadsHandler implements Handler {
                     serie.getPath(),
                     getSeasonFolderNameFromSeason(season.getDownloadedFolderName())
             );
-            refreshSerieInSonarrAndPlex(serie, season.getQueueItemId());
+            serieRefresher.refreshSerieInSonarrAndPlex(serie, season.getQueueItemId());
             log("season handled!");
         } catch (Exception e) {
             log("could not handle the season because of "+e.getMessage());
@@ -96,35 +100,12 @@ public class SonarrFailedDownloadsHandler implements Handler {
                     serie.getPath(),
                     getSeasonFolderNameFromEpisode(episodeRecord.getTitle())
             );
-            refreshSerieInSonarrAndPlex(serie, episodeRecord.getId());
+            serieRefresher.refreshSerieInSonarrAndPlex(serie, episodeRecord.getId());
             log("episode handled!");
         } catch (Exception e) {
             log("could not handle the episode because of "+e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    private void refreshSerieInSonarrAndPlex(SonarrSerie serie, Integer queueElementId) {
-        sonarrApiGateway.refreshSerie(serie.getId());
-        sonarrApiGateway.deleteQueueElement(queueElementId);
-        String plexSeriePath = serie.getPath().replaceFirst("/tv", "/mnt/mangrana_series");
-        plexCommander.scanByPath(plexSeriePath);
-    }
-
-    private String getSeasonFolderNameFromSeason(String seasonFolderName) throws IncorrectWorkingReferencesException {
-        String season = Optional.ofNullable(
-                StringCaptor.getMatchingSubstring(seasonFolderName, "(S\\d{2})"))
-                .orElseThrow(() ->
-                        new IncorrectWorkingReferencesException("Couldn't determinate the season from: "+seasonFolderName));
-        return season.replaceFirst("S", "Temporada ");
-    }
-
-    private String getSeasonFolderNameFromEpisode(String episodeFileName) throws IncorrectWorkingReferencesException {
-        String episodeInfo = Optional.ofNullable(
-                        StringCaptor.getMatchingSubstring(episodeFileName, "(S\\d{2}E\\d{2})"))
-                .orElseThrow(() ->
-                        new IncorrectWorkingReferencesException("Couldn't determinate the episode from: "+episodeFileName));
-        return "Temporada ".concat(episodeInfo.substring(1,3));
     }
 
     private Season buildSeason(Map.Entry<String, List<Record>> entry) {

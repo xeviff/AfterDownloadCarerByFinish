@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.sonarr.api.client.gateway;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.sonarr.api.schema.history.SonarrHistory;
 import cat.hack3.mangrana.sonarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.schema.command.RefreshSerieCommand;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
@@ -39,8 +40,8 @@ public class SonarrApiGateway {
         proxy.refreshSeriesCommand(new RefreshSerieCommand(seriesId), apiKey);
     }
 
-    public void getHistory () {
-        proxy.getHistory("date", "desc", 200, 1, apiKey);
+    public SonarrHistory getHistory () {
+        return proxy.getHistory("date", "desc", 200, 1, apiKey);
     }
 
 }
