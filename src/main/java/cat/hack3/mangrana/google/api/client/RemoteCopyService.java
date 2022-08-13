@@ -1,15 +1,16 @@
 package cat.hack3.mangrana.google.api.client;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.FOLDER;
@@ -20,10 +21,14 @@ public class RemoteCopyService {
 
     ConfigFileLoader configFileLoader;
     GoogleDriveApiGateway googleDriveApiGateway;
+    RetryEngine retryEngine;
 
     public RemoteCopyService(ConfigFileLoader configFileLoader) throws IOException {
         this.configFileLoader = configFileLoader;
         googleDriveApiGateway = new GoogleDriveApiGateway();
+    }
+    public void setRetryEngine(RetryEngine retryEngine){
+        this.retryEngine = retryEngine;
     }
 
     public void copyVideoFile(String downloadedFileName, String destinationFullPath) throws IOException {
@@ -60,7 +65,16 @@ public class RemoteCopyService {
 
     public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException {
         log("copying season <"+downloadedFolderName+"> to <"+destinationFullPath+">");
-        File downloadedSeasonFolder = googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+        Supplier<File> checkIfFolderExistFunction = () -> {
+            try {
+                return googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+            } catch (Exception e) {
+                log("could not find yet the folder :"+downloadedFolderName);
+                return null;
+            }
+        };
+        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? checkIfFolderExistFunction.get() : retryEngine.tryWaitAndRetry(checkIfFolderExistFunction);
+        if (Objects.isNull(downloadedSeasonFolder)) throw new NoSuchElementException("could not retrieve the downloaded folder");
         String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
