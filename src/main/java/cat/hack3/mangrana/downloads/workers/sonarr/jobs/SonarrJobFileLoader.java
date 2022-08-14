@@ -11,9 +11,11 @@ import java.util.Objects;
 
 public class SonarrJobFileLoader {
 
-    private static final String JOBS_DIRECTORY_PATH = "/jobs/sonarr";
+    public static final String JOBS_DIRECTORY_PATH = "/jobs/sonarr";
+    private File jobFile;
 
     public enum GrabInfo {
+        SONARR_RELEASE_TITLE,
         SONARR_SERIES_ID,
         SONARR_RELEASE_EPISODECOUNT,
         SONARR_DOWNLOAD_ID,
@@ -24,7 +26,7 @@ public class SonarrJobFileLoader {
 
     public SonarrJobFileLoader() throws IncorrectWorkingReferencesException {
         File jobsDir = new File(System.getProperty("user.dir") + JOBS_DIRECTORY_PATH);
-        File jobFile = Arrays.stream(Objects.requireNonNull(jobsDir.listFiles()))
+        jobFile = Arrays.stream(Objects.requireNonNull(jobsDir.listFiles()))
                 .filter(File::isFile)
                 .filter(file -> file.getName().endsWith("-grab.log"))
                 .findFirst()
@@ -39,6 +41,10 @@ public class SonarrJobFileLoader {
 
     public boolean hasInfo() {
         return Objects.nonNull(infoMap);
+    }
+
+    public File getFile () {
+        return jobFile;
     }
 
 }

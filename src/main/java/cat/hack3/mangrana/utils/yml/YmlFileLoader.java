@@ -18,7 +18,7 @@ public class YmlFileLoader {
 
     @SuppressWarnings("all")
     public static <E extends Enum<E>> EnumMap<E, String> getEnumMapFromFile(File ymlFile, Class<E> enumData) throws IncorrectWorkingReferencesException {
-        log("Loading yml values from the file...");
+        log("Loading yml values from the file "+ymlFile.getAbsolutePath());
         try {
             EnumMap<E, String> valuesMap = new EnumMap<>(enumData);
             YamlMapping yamlMapping = Yaml.createYamlInput(ymlFile)
@@ -31,7 +31,7 @@ public class YmlFileLoader {
                 else
                     valuesMap.put((E) constant, value);
             }
-
+            log("mapped values to EnumMap "+enumData.getName());
             return valuesMap;
         } catch (IOException e) {
             throw new IncorrectWorkingReferencesException("couldn't find the config file :(");

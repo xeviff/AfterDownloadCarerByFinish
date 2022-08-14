@@ -14,7 +14,10 @@ import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
@@ -22,6 +25,7 @@ import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader.GrabInfo.*;
 import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.utils.PathUtils.moveJobFileToDoneFolder;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
@@ -51,6 +55,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
     @Override
     public void handle() {
         try {
+            log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
             int episodeCount = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_RELEASE_EPISODECOUNT));
             DownloadType type = episodeCount == 1 ? DownloadType.EPISODE : DownloadType.SEASON;
             int serieId = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_SERIES_ID));
@@ -58,28 +63,36 @@ public class SonarrFinishedDownloadsHandler implements Handler {
             String fileName = sonarrJobFileLoader.getInfo(JAVA_FILENAME);
 
             Supplier<String> getOutputFromQueue = () -> {
-                SonarrQueue queue = sonarrApiGateway.getQueue();
-                String outputPath = queue.getRecords()
-                        .stream()
-                        .filter(rcd -> downloadId.equals(rcd.getDownloadId()))
-                        .findFirst()
-                        .orElseThrow(() -> new NoSuchElementException("not found"))
-                        .getOutputPath();
-                return DownloadType.SEASON.equals(type)
-                        ? PathUtils.getCurrentFromFullPath(outputPath)
-                        : outputPath;
+                log("searching queue for element "+downloadId);
+                try {
+                    SonarrQueue queue = sonarrApiGateway.getQueue();
+                    String outputPath = queue.getRecords()
+                            .stream()
+                            .filter(rcd -> downloadId.equals(rcd.getDownloadId()))
+                            .findFirst()
+                            .orElseThrow(() -> new NoSuchElementException("element not found in queue"))
+                            .getOutputPath();
+                    return PathUtils.getCurrentFromFullPath(outputPath);
+                } catch (NoSuchElementException e) {
+                    log("not found yet on queue, will retry");
+                    return null;
+                }
             };
 
-            String elementName = StringUtils.isNotEmpty(fileName)
-                    ? fileName
-                    : getOutputFromQueue.get();
-
+            String elementName;
+            if (StringUtils.isNotEmpty(fileName)) {
+                elementName = fileName;
+            } else {
+                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(60);
+                elementName = retryEngineForQueue.tryWaitAndRetry(getOutputFromQueue);
+                writeElementNameToJobInfo(elementName);
+            }
             if (DownloadType.EPISODE.equals(type)) {
                 handleEpisode(serieId, elementName);
             } else {
                 handleSeason(serieId, elementName, episodeCount);
             }
-
+            moveJobFileToDoneFolder(sonarrJobFileLoader.getFile());
         } catch (Exception e) {
             log("something wrong: "+e.getMessage());
             e.printStackTrace();
@@ -89,7 +102,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
     private void handleEpisode(int serieId, String fileName) throws IOException, IncorrectWorkingReferencesException {
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromEpisode(fileName);
-        copyService.setRetryEngine(new RetryEngine(10));
+        copyService.setRetryEngine(new RetryEngine<>(10));
         copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
@@ -97,11 +110,20 @@ public class SonarrFinishedDownloadsHandler implements Handler {
     private void handleSeason(int serieId, String folderName, int episodesMustHave) throws IOException, IncorrectWorkingReferencesException {
         Function<File, List<File>> childrenRetriever = file ->
                 googleDriveApiGateway.getChildrenFromParent(file, false);
-        copyService.setRetryEngine(new RetryEngine(10, episodesMustHave, childrenRetriever));
+        copyService.setRetryEngine(new RetryEngine<>(10, episodesMustHave, childrenRetriever));
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromSeason(folderName);
         copyService.copySeasonFromDownloadToItsLocation(folderName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
+
+    private void writeElementNameToJobInfo(String elementName) throws IOException {
+        try (Writer output = new BufferedWriter(
+                new FileWriter(sonarrJobFileLoader.getFile().getAbsolutePath(), true))) {
+            output.append(JAVA_FILENAME.name().toLowerCase().concat(": "+elementName));
+            log("persisted elementName to job file");
+        }
+    }
+
 }

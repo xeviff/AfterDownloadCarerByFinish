@@ -1,6 +1,5 @@
 package cat.hack3.mangrana.downloads.workers;
 
-import com.google.api.services.drive.model.File;
 import org.apache.commons.lang.StringUtils;
 
 import java.rmi.UnexpectedException;
@@ -12,41 +11,44 @@ import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
-public class RetryEngine {
+public class RetryEngine<D> {
 
     private final int minutesToWait;
-    private final int elementsMustHave;
-    private final Function<File, List<File>> childrenRetriever;
+    private final int childrenMustHave;
+    private final Function<D, List<D>> childrenRetriever;
 
     public RetryEngine(int minutesToWait) {
         this(minutesToWait, 0, null);
     }
-    public RetryEngine(int minutesToWait, int elementsMustHave, Function<File, List<File>> childrenRetriever) {
+    public RetryEngine(int minutesToWait, int childrenMustHave, Function<D, List<D>> childrenRetriever) {
         this.minutesToWait = minutesToWait;
-        this.elementsMustHave = elementsMustHave;
+        this.childrenMustHave = childrenMustHave;
         this.childrenRetriever = childrenRetriever;
     }
 
-    public File tryWaitAndRetry (Supplier<File> checker) throws UnexpectedException {
-        File file = null;
-        boolean waitForChildren = elementsMustHave > 0;
-        while (Objects.isNull(file) && waitForChildren) {
-            file = checker.get();
-            if (Objects.isNull(file)) {
+    public D tryWaitAndRetry (Supplier<D> checker) throws UnexpectedException {
+        D desired = null;
+        boolean waitForChildren = childrenMustHave > 0;
+        while (Objects.isNull(desired)) {
+            desired = checker.get();
+            if (Objects.isNull(desired)) {
                 waitBeforeNextRetry(minutesToWait, null);
             } else if (waitForChildren) {
-                List<File> children = childrenRetriever.apply(file);
-                if (children.size() < elementsMustHave) {
-                    waitBeforeNextRetry(minutesToWait, null);
-                } else {
-                    int shorterTime = minutesToWait/3;
-                    waitBeforeNextRetry(shorterTime, "waiting a bit more for courtesy: "+shorterTime+"min");
-                    waitForChildren = false;
+                while (waitForChildren) {
+                    List<D> children = childrenRetriever.apply(desired);
+                    if (children.size() < childrenMustHave) {
+                        waitBeforeNextRetry(minutesToWait, null);
+                    } else {
+                        int shorterTime = minutesToWait / 3;
+                        waitBeforeNextRetry(shorterTime, "waiting a bit more for courtesy: " + shorterTime + "min");
+                        waitForChildren = false;
+                    }
                 }
             }
         }
-        return file;
+        return desired;
     }
+
 
     public void waitBeforeNextRetry(int currentMinutesToWait, String forcedMessage) throws UnexpectedException {
         String msg = StringUtils.isNotEmpty(forcedMessage)
