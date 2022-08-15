@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader;
@@ -38,7 +39,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 
     public enum DownloadType {SEASON, EPISODE}
 
-    private static final int CLOUD_WAIT_INTERVAL = 30;
+    private static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 30;
+    private static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 15;
 
     public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException, IncorrectWorkingReferencesException {
         sonarrJobFileLoader = new SonarrJobFileLoader(configFileLoader);
@@ -65,7 +67,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
             sonarrJobFileLoader.markDoing();
 
             Supplier<String> getOutputFromQueue = () -> {
-                log("searching queue for element "+downloadId);
+                log("searching from Sonarr Queue downloadId="+downloadId);
                 try {
                     SonarrQueue queue = sonarrApiGateway.getQueue();
                     String outputPath = queue.getRecords()
@@ -83,9 +85,10 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 
             String elementName;
             if (StringUtils.isNotEmpty(fileName)) {
+                log("retrieved cached element name from file :D -> "+fileName);
                 elementName = fileName;
             } else {
-                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(15);
+                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL);
                 elementName = retryEngineForQueue.tryWaitAndRetry(getOutputFromQueue);
                 writeElementNameToJobInfo(elementName);
             }
@@ -125,7 +128,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         try (Writer output = new BufferedWriter(
                 new FileWriter(sonarrJobFileLoader.getFile().getAbsolutePath(), true))) {
             output.append(JAVA_FILENAME.name().toLowerCase().concat(": "+elementName));
-            log("persisted elementName to job file");
+            log("persisted elementName to job file -> "+elementName);
         }
     }
 

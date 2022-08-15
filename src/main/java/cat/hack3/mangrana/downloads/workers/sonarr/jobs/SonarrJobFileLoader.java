@@ -2,10 +2,10 @@ package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.utils.PathUtils;
 import cat.hack3.mangrana.utils.yml.YmlFileLoader;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.NoSuchElementException;
@@ -38,7 +38,7 @@ public class SonarrJobFileLoader {
         jobFile = Arrays.stream(Objects.requireNonNull(jobsDir.listFiles()))
                 .filter(File::isFile)
                 .filter(file -> file.getName().endsWith(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER).concat(".log")))
-                .findFirst()
+                .max(PathUtils::compareFileCreationDate)
                 .orElseThrow(() -> new NoSuchElementException("no job file was found"));
 
         infoMap = YmlFileLoader.getEnumMapFromFile(jobFile, GrabInfo.class);

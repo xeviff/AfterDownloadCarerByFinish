@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.text.MessageFormat;
 
 import static cat.hack3.mangrana.utils.Output.log;
@@ -38,6 +39,20 @@ public class PathUtils {
             log(MessageFormat.format("could not move file from -{0}- to -{1}-", folderOrigin, folderDestination));
             return jobFile;
         }
+    }
+
+    public static int compareFileCreationDate (File o1, File o2) {
+        final String creationTimeAttr = "creationTime";
+        int res = 0;
+        try {
+            FileTime o1Birthday = (FileTime) Files.getAttribute(o1.toPath(), creationTimeAttr);
+            FileTime o2Birthday = (FileTime) Files.getAttribute(o2.toPath(), creationTimeAttr);
+            res = o1Birthday.compareTo(o2Birthday);
+        } catch (IOException e) {
+            log("there was a problem trying to compare creation date between "
+            + o1.getName() + " and " + o2.getName());
+        }
+        return res;
     }
 
 }
