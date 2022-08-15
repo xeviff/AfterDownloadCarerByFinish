@@ -25,7 +25,12 @@ public class YmlFileLoader {
                     .readYamlMapping();
 
             for (E constant : enumData.getEnumConstants()) {
-                String value = yamlMapping.string(constant.name().toLowerCase());
+                String value = null;
+                try {
+                    value = yamlMapping.string(constant.name().toLowerCase());
+                } catch (Exception e) {
+                    log("problem with this mapping "+e.getMessage());
+                }
                 if (StringUtils.isEmpty(value))
                     log("Couldn't retrieve the value from " + constant.name());
                 else

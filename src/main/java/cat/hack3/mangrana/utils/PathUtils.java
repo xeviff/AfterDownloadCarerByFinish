@@ -1,24 +1,18 @@
 package cat.hack3.mangrana.utils;
 
 
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader;
-import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
 public class PathUtils {
 
     private PathUtils(){}
-
-    public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
-        SonarrJobFileLoader x = new SonarrJobFileLoader();
-        moveJobFileToDoneFolder(x.getFile());
-    }
 
     public static String getParentFromFullPath(String absolutePath){
         return Paths
@@ -32,12 +26,18 @@ public class PathUtils {
         return absolutePath.substring(absolutePath.lastIndexOf('/')+1);
     }
 
-    public static void moveJobFileToDoneFolder(File jobFile) throws IOException {
-        Files.move(
-                jobFile.toPath()
-                , Paths.get(jobFile.getParent()
-                        + "/done/"+jobFile.getName()));
-        log("moved job file to -done- folder");
+    public static File shiftFileFolder(File jobFile, String folderOrigin, String folderDestination) {
+        try {
+            Path newPath = Files.move(
+                    jobFile.toPath()
+                    , Paths.get(jobFile.getAbsolutePath()
+                            .replaceFirst(folderOrigin, folderDestination)));
+            log(MessageFormat.format("moved job file from -{0}- to -{1}-", folderOrigin, folderDestination));
+            return newPath.toFile();
+        } catch (IOException e) {
+            log(MessageFormat.format("could not move file from -{0}- to -{1}-", folderOrigin, folderDestination));
+            return jobFile;
+        }
     }
 
 }

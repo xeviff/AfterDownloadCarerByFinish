@@ -90,7 +90,7 @@ public class RemoteCopyService {
             try {
                 return googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
             } catch (Exception e) {
-                log("could not find yet the file :"+downloadedFileName);
+                log("could not find yet the file: "+downloadedFileName);
                 return null;
             }
         };

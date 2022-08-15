@@ -25,11 +25,10 @@ import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader.GrabInfo.*;
 import static cat.hack3.mangrana.utils.Output.log;
-import static cat.hack3.mangrana.utils.PathUtils.moveJobFileToDoneFolder;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
-public class SonarrFinishedDownloadsHandler implements Handler {
+public class SonarGrabbedDownloadsHandler implements Handler {
 
     SonarrApiGateway sonarrApiGateway;
     GoogleDriveApiGateway googleDriveApiGateway;
@@ -39,8 +38,10 @@ public class SonarrFinishedDownloadsHandler implements Handler {
 
     public enum DownloadType {SEASON, EPISODE}
 
-    public SonarrFinishedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException, IncorrectWorkingReferencesException {
-        sonarrJobFileLoader = new SonarrJobFileLoader();
+    private static final int CLOUD_WAIT_INTERVAL = 30;
+
+    public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException, IncorrectWorkingReferencesException {
+        sonarrJobFileLoader = new SonarrJobFileLoader(configFileLoader);
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         googleDriveApiGateway = new GoogleDriveApiGateway();
@@ -49,7 +50,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
         ConfigFileLoader configFileLoader = new ConfigFileLoader();
-        new SonarrFinishedDownloadsHandler(configFileLoader).handle();
+        new SonarGrabbedDownloadsHandler(configFileLoader).handle();
     }
 
     @Override
@@ -61,6 +62,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
             int serieId = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_SERIES_ID));
             String downloadId = sonarrJobFileLoader.getInfo(SONARR_DOWNLOAD_ID);
             String fileName = sonarrJobFileLoader.getInfo(JAVA_FILENAME);
+            sonarrJobFileLoader.markDoing();
 
             Supplier<String> getOutputFromQueue = () -> {
                 log("searching queue for element "+downloadId);
@@ -83,7 +85,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
             if (StringUtils.isNotEmpty(fileName)) {
                 elementName = fileName;
             } else {
-                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(60);
+                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(15);
                 elementName = retryEngineForQueue.tryWaitAndRetry(getOutputFromQueue);
                 writeElementNameToJobInfo(elementName);
             }
@@ -92,9 +94,10 @@ public class SonarrFinishedDownloadsHandler implements Handler {
             } else {
                 handleSeason(serieId, elementName, episodeCount);
             }
-            moveJobFileToDoneFolder(sonarrJobFileLoader.getFile());
+            sonarrJobFileLoader.markDone();
         } catch (Exception e) {
             log("something wrong: "+e.getMessage());
+            sonarrJobFileLoader.driveBack();
             e.printStackTrace();
         }
     }
@@ -102,7 +105,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
     private void handleEpisode(int serieId, String fileName) throws IOException, IncorrectWorkingReferencesException {
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromEpisode(fileName);
-        copyService.setRetryEngine(new RetryEngine<>(10));
+        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL));
         copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
@@ -110,7 +113,7 @@ public class SonarrFinishedDownloadsHandler implements Handler {
     private void handleSeason(int serieId, String folderName, int episodesMustHave) throws IOException, IncorrectWorkingReferencesException {
         Function<File, List<File>> childrenRetriever = file ->
                 googleDriveApiGateway.getChildrenFromParent(file, false);
-        copyService.setRetryEngine(new RetryEngine<>(10, episodesMustHave, childrenRetriever));
+        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL, episodesMustHave, childrenRetriever));
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromSeason(folderName);

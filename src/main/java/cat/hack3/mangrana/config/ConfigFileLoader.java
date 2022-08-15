@@ -20,6 +20,7 @@ public class ConfigFileLoader {
 
     public enum ProjectConfiguration {
         MANAGE_FAILED_DOWNLOADS,
+        GRABBED_FILE_IDENTIFIER,
         RADARR_API_KEY,
         RADARR_API_HOST,
         SONARR_API_KEY,

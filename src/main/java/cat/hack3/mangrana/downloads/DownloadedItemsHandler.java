@@ -5,7 +5,7 @@ import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFailedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFinishedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarrFailedDownloadsHandler;
-import cat.hack3.mangrana.downloads.workers.sonarr.SonarrFinishedDownloadsHandler;
+import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 
@@ -26,9 +26,9 @@ public class DownloadedItemsHandler {
     private DownloadedItemsHandler() throws IncorrectWorkingReferencesException, IOException {
         log("Hi my friends, here the downloaded movies handler. enjoy");
         configFileLoader = new ConfigFileLoader();
-        sonarrJobFileLoader = new SonarrJobFileLoader();
+        sonarrJobFileLoader = new SonarrJobFileLoader(configFileLoader);
         actionHandler = new EnumMap<>(ActionType.class);
-        actionHandler.put(ActionType.SONARR_GRAB, new SonarrFinishedDownloadsHandler(configFileLoader));
+        actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.RADARR_GRAB, new RadarrFinishedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.SONARR_FAILED, new SonarrFailedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.RADARR_FAILED, new RadarrFailedDownloadsHandler(configFileLoader));
