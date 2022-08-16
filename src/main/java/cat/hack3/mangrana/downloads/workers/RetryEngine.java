@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.utils.Output.logDate;
 
 public class RetryEngine<D> {
 
@@ -26,17 +27,19 @@ public class RetryEngine<D> {
         this.childrenRetriever = childrenRetriever;
     }
 
-    public D tryWaitAndRetry (Supplier<D> checker) throws UnexpectedException {
+    public D tryUntilGotDesired(Supplier<D> tryToGet) throws UnexpectedException {
         D desired = null;
         boolean waitForChildren = childrenMustHave > 0;
         while (Objects.isNull(desired)) {
-            desired = checker.get();
+            desired = tryToGet.get();
             if (Objects.isNull(desired)) {
+                log("couldn't find it");
                 waitBeforeNextRetry(minutesToWait, null);
             } else if (waitForChildren) {
                 while (waitForChildren) {
                     List<D> children = childrenRetriever.apply(desired);
                     if (children.size() < childrenMustHave) {
+                        log("there is no enough child elements yet");
                         waitBeforeNextRetry(minutesToWait, null);
                     } else {
                         int shorterTime = minutesToWait / 3;
@@ -46,6 +49,7 @@ public class RetryEngine<D> {
                 }
             }
         }
+        log("found desired element and returning it");
         return desired;
     }
 
@@ -55,6 +59,7 @@ public class RetryEngine<D> {
                 ? forcedMessage
                 : "waiting "+currentMinutesToWait+" minutes before the next try";
         log(msg);
+        logDate();
         try {
             TimeUnit.MINUTES.sleep(currentMinutesToWait);
         } catch (InterruptedException e) {

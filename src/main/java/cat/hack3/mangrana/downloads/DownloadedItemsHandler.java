@@ -24,11 +24,12 @@ public class DownloadedItemsHandler {
     SonarrJobFileLoader sonarrJobFileLoader;
 
     private DownloadedItemsHandler() throws IncorrectWorkingReferencesException, IOException {
+        log("********************************************************");
         log("Hi my friends, here the downloaded movies handler. enjoy");
         configFileLoader = new ConfigFileLoader();
         sonarrJobFileLoader = new SonarrJobFileLoader(configFileLoader);
         actionHandler = new EnumMap<>(ActionType.class);
-        actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader));
+        actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader, sonarrJobFileLoader));
         actionHandler.put(ActionType.RADARR_GRAB, new RadarrFinishedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.SONARR_FAILED, new SonarrFailedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.RADARR_FAILED, new RadarrFailedDownloadsHandler(configFileLoader));

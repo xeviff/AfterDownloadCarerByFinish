@@ -3,15 +3,15 @@ package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.utils.PathUtils;
-import cat.hack3.mangrana.utils.yml.YmlFileLoader;
+import cat.hack3.mangrana.utils.yml.FakeYmlLoader;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER;
+import static cat.hack3.mangrana.utils.Output.log;
 import static cat.hack3.mangrana.utils.PathUtils.shiftFileFolder;
 
 public class SonarrJobFileLoader {
@@ -20,7 +20,7 @@ public class SonarrJobFileLoader {
     private static final String PATH_DOING = "doing";
     private static final String PATH_DONE = "done";
 
-    public static final String JOBS_DIRECTORY_PATH = "/jobs/sonarr/"+ PATH_TODO;
+    public static final String JOBS_DIRECTORY_PATH = "/jobs/";
     private File jobFile;
 
     public enum GrabInfo {
@@ -34,14 +34,23 @@ public class SonarrJobFileLoader {
     private final EnumMap<GrabInfo, String> infoMap;
 
     public SonarrJobFileLoader(ConfigFileLoader configFileLoader) throws IncorrectWorkingReferencesException {
-        File jobsDir = new File(System.getProperty("user.dir") + JOBS_DIRECTORY_PATH);
+        if (Objects.isNull(retrieveJobFile(configFileLoader, PATH_DOING))) {
+            log("nothing previously in <doing> folder, so searching at <to_do>");
+            retrieveJobFile(configFileLoader, PATH_TODO);
+        } else {
+            log("resuming <doing> state job");
+        }
+        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class);
+    }
+
+    private File retrieveJobFile(ConfigFileLoader configFileLoader, String stateFolder) {
+        File jobsDir = new File(System.getProperty("user.dir") + JOBS_DIRECTORY_PATH + stateFolder);
         jobFile = Arrays.stream(Objects.requireNonNull(jobsDir.listFiles()))
                 .filter(File::isFile)
                 .filter(file -> file.getName().endsWith(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER).concat(".log")))
                 .max(PathUtils::compareFileCreationDate)
-                .orElseThrow(() -> new NoSuchElementException("no job file was found"));
-
-        infoMap = YmlFileLoader.getEnumMapFromFile(jobFile, GrabInfo.class);
+                .orElse(null);
+        return jobFile;
     }
 
     public String getInfo(GrabInfo key) {

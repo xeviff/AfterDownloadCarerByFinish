@@ -73,7 +73,7 @@ public class RemoteCopyService {
                 return null;
             }
         };
-        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? checkIfFolderExistFunction.get() : retryEngine.tryWaitAndRetry(checkIfFolderExistFunction);
+        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? checkIfFolderExistFunction.get() : retryEngine.tryUntilGotDesired(checkIfFolderExistFunction);
         if (Objects.isNull(downloadedSeasonFolder)) throw new NoSuchElementException("definitely, could not retrieve the downloaded folder");
 
         String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
@@ -94,7 +94,7 @@ public class RemoteCopyService {
                 return null;
             }
         };
-        File downloadedFile = Objects.isNull(retryEngine) ? checkIfFileExistFunction.get() : retryEngine.tryWaitAndRetry(checkIfFileExistFunction);
+        File downloadedFile = Objects.isNull(retryEngine) ? checkIfFileExistFunction.get() : retryEngine.tryUntilGotDesired(checkIfFileExistFunction);
         if (Objects.isNull(downloadedFile)) throw new NoSuchElementException("definitely, could not retrieve the video file");
 
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
