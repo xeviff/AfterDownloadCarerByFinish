@@ -66,7 +66,9 @@ public class SonarrJobFileLoader {
     }
 
     public void markDoing() {
-        jobFile = shiftFileFolder(jobFile, PATH_TODO, PATH_DOING);
+        if (jobFile.getAbsolutePath().contains(PATH_TODO)) {
+            jobFile = shiftFileFolder(jobFile, PATH_TODO, PATH_DOING);
+        }
     }
 
     public void markDone() {

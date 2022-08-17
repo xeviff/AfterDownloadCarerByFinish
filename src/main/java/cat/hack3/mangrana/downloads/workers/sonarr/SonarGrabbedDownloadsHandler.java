@@ -64,7 +64,6 @@ public class SonarGrabbedDownloadsHandler implements Handler {
             int serieId = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_SERIES_ID));
             String downloadId = sonarrJobFileLoader.getInfo(SONARR_DOWNLOAD_ID);
             String fileName = sonarrJobFileLoader.getInfo(JAVA_FILENAME);
-            sonarrJobFileLoader.markDoing();
 
             Supplier<String> getOutputFromQueue = () -> {
                 log("searching from Sonarr Queue downloadId="+downloadId);
@@ -90,6 +89,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
             } else {
                 RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL);
                 elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
+                sonarrJobFileLoader.markDoing();
                 writeElementNameToJobInfo(elementName);
             }
             if (DownloadType.EPISODE.equals(type)) {
