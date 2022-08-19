@@ -9,7 +9,6 @@ import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +50,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 
     @Override
     public void handle() {
-        while (CollectionUtils.isNotEmpty(retrieveJobs()) && !allJobsFinished()) {
+        retrieveJobs();
+//        while (CollectionUtils.isNotEmpty(retrieveJobs()) && !allJobsFinished()) {
             ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
             for (File jobFile : jobFiles) {
                 try {
@@ -61,7 +61,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                     log("not going to work with " + jobFile.getAbsolutePath());
                 }
             }
-        }
+//        }
     }
 
     private List<File> retrieveJobs() {
@@ -96,7 +96,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     private boolean allJobsFinished() {
-        return jobs.values().stream().allMatch(state -> state.equals("finished"));
+        return !jobs.isEmpty() && jobs.values().stream().allMatch(state -> state.equals("finished"));
     }
 
 }

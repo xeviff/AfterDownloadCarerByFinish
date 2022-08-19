@@ -59,8 +59,8 @@ public class SonarrJobHandler implements Runnable {
     @Override
     public void run() {
         try {
-            log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
             downloadId = sonarrJobFileLoader.getInfo(SONARR_DOWNLOAD_ID);
+            log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
             orchestrator.jobInitiated(downloadId);
             int episodeCount = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_RELEASE_EPISODECOUNT));
             DownloadType type = episodeCount == 1 ? EPISODE : SEASON;
@@ -89,7 +89,7 @@ public class SonarrJobHandler implements Runnable {
                 log("retrieved cached element name from file :D -> "+fileName);
                 elementName = fileName;
             } else {
-                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL);
+                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL, downloadId);
                 elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue, t -> holdOn());
                 sonarrJobFileLoader.markDoing();
                 orchestrator.setWorkingWithAJob(true);
@@ -116,7 +116,7 @@ public class SonarrJobHandler implements Runnable {
     private void handleEpisode(int serieId, String fileName) throws IOException, IncorrectWorkingReferencesException {
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromEpisode(fileName);
-        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2));
+        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2, downloadId));
         copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
@@ -124,7 +124,10 @@ public class SonarrJobHandler implements Runnable {
     private void handleSeason(int serieId, String folderName, int episodesMustHave) throws IOException, IncorrectWorkingReferencesException {
         Function<File, List<File>> childrenRetriever = file ->
                 googleDriveApiGateway.getChildrenFromParent(file, false);
-        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL, episodesMustHave, childrenRetriever));
+        Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
+        RetryEngine<File> retryer = new RetryEngine<>(CLOUD_WAIT_INTERVAL, downloadId,
+                new RetryEngine.ChildrenRequirements<>(episodesMustHave, childrenRetriever, fileNameConstraint));
+        copyService.setRetryEngine(retryer);
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromSeason(folderName);

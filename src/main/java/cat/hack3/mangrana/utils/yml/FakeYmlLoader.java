@@ -34,7 +34,7 @@ public class FakeYmlLoader {
                     .forEach(cons ->
                             enumMap.put(cons, fileLines.get(cons.name().toLowerCase()))
                     );
-            log("mapped values to EnumMap "+enumData.getName());
+            log("mapped values to EnumMap "+enumData.getCanonicalName());
             return enumMap;
         } catch (IOException e) {
             e.printStackTrace();

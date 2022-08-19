@@ -33,10 +33,10 @@ public class PathUtils {
                     jobFile.toPath()
                     , Paths.get(jobFile.getAbsolutePath()
                             .replaceFirst(folderOrigin, folderDestination)));
-            log(MessageFormat.format("moved job file from -{0}- to -{1}-", folderOrigin, folderDestination));
+            log(MessageFormat.format("moved job file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
             return newPath.toFile();
         } catch (IOException e) {
-            log(MessageFormat.format("could not move file from -{0}- to -{1}-", folderOrigin, folderDestination));
+            log(MessageFormat.format("could not move file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
             return jobFile;
         }
     }
