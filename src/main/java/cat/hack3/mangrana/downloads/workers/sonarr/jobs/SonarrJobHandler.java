@@ -19,19 +19,25 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.CLOUD_WAIT_INTERVAL;
 import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.SONARR_WAIT_INTERVAL;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader.GrabInfo.*;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.EPISODE;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.SEASON;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
 public class SonarrJobHandler implements Runnable {
 
+    public enum DownloadType {SEASON, EPISODE}
     SonarrApiGateway sonarrApiGateway;
     GoogleDriveApiGateway googleDriveApiGateway;
     RemoteCopyService copyService;
@@ -53,11 +59,11 @@ public class SonarrJobHandler implements Runnable {
     @Override
     public void run() {
         try {
+            log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
             downloadId = sonarrJobFileLoader.getInfo(SONARR_DOWNLOAD_ID);
             orchestrator.jobInitiated(downloadId);
-            log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
             int episodeCount = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_RELEASE_EPISODECOUNT));
-            SonarGrabbedDownloadsHandler.DownloadType type = episodeCount == 1 ? SonarGrabbedDownloadsHandler.DownloadType.EPISODE : SonarGrabbedDownloadsHandler.DownloadType.SEASON;
+            DownloadType type = episodeCount == 1 ? EPISODE : SEASON;
             int serieId = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_SERIES_ID));
             String fileName = sonarrJobFileLoader.getInfo(JAVA_FILENAME);
 
@@ -91,7 +97,7 @@ public class SonarrJobHandler implements Runnable {
             }
             orchestrator.jobHasFileName(downloadId);
 
-            if (SonarGrabbedDownloadsHandler.DownloadType.EPISODE.equals(type)) {
+            if (EPISODE.equals(type)) {
                 handleEpisode(serieId, elementName);
             } else {
                 handleSeason(serieId, elementName, episodeCount);
@@ -138,10 +144,16 @@ public class SonarrJobHandler implements Runnable {
         synchronized (orchestrator) {
             log("job received hold on order");
             try {
+                Instant beforeWait = Instant.now();
                 while (orchestrator.isWorkingWithAJob()) {
                     log("job going to sleep");
                     orchestrator.wait();
                     log("job waking up");
+                }
+                Instant afterWait = Instant.now();
+                if (Duration.between(beforeWait, afterWait).toMinutes()<1) {
+                    log("seems that things are going too fast, sleeping 2 minutes more");
+                    TimeUnit.MINUTES.sleep(2);
                 }
             } catch (InterruptedException e) {
                 log("could not put on waiting the job " + downloadId);

@@ -29,8 +29,6 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
-    public enum DownloadType {SEASON, EPISODE}
-
     public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 30;
     public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 5;
 
