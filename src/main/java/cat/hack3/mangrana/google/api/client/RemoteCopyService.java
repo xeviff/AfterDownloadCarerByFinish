@@ -64,7 +64,7 @@ public class RemoteCopyService {
     }
 
     public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException {
-        log("willing for copy season <"+downloadedFolderName+"> to <"+destinationFullPath+">");
+        log("willing for copy season <"+downloadedFolderName+"> to <"+destinationFullPath+"/"+seasonFolderName+">");
         Supplier<File> checkIfFolderExistFunction = () -> {
             try {
                 return googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
@@ -85,7 +85,7 @@ public class RemoteCopyService {
     }
 
     public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException {
-        log("willing for copy episode <"+downloadedFileName+"> to <"+destinationFullPath+">");
+        log("willing for copy episode <"+downloadedFileName+"> to <"+destinationFullPath+"/"+seasonFolderName+">");
         Supplier<File> checkIfFileExistFunction = () -> {
             try {
                 return googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));

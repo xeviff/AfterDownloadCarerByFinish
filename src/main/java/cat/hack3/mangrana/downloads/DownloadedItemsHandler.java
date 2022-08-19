@@ -4,9 +4,8 @@ import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFailedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFinishedDownloadsHandler;
-import cat.hack3.mangrana.downloads.workers.sonarr.SonarrFailedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader;
+import cat.hack3.mangrana.downloads.workers.sonarr.SonarrFailedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 
 import java.io.IOException;
@@ -21,15 +20,13 @@ public class DownloadedItemsHandler {
     private enum ActionType {SONARR_GRAB, RADARR_GRAB, SONARR_FAILED, RADARR_FAILED}
     private final EnumMap<ActionType, Handler> actionHandler;
     ConfigFileLoader configFileLoader;
-    SonarrJobFileLoader sonarrJobFileLoader;
 
     private DownloadedItemsHandler() throws IncorrectWorkingReferencesException, IOException {
         log("********************************************************");
         log("Hi my friends, here the downloaded movies handler. enjoy");
         configFileLoader = new ConfigFileLoader();
-        sonarrJobFileLoader = new SonarrJobFileLoader(configFileLoader);
         actionHandler = new EnumMap<>(ActionType.class);
-        actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader, sonarrJobFileLoader));
+        actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.RADARR_GRAB, new RadarrFinishedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.SONARR_FAILED, new SonarrFailedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.RADARR_FAILED, new RadarrFailedDownloadsHandler(configFileLoader));
@@ -45,8 +42,7 @@ public class DownloadedItemsHandler {
             actionHandler.get(ActionType.SONARR_FAILED).handle();
         }
 
-        if (sonarrJobFileLoader.hasInfo())
-            actionHandler.get(ActionType.SONARR_GRAB).handle();
+        actionHandler.get(ActionType.SONARR_GRAB).handle();
 
         log("that's all, folks");
         logDate();

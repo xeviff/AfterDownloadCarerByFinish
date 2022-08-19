@@ -2,11 +2,11 @@ package cat.hack3.mangrana.downloads.workers;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.rmi.UnexpectedException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.utils.Output.log;
@@ -27,20 +27,20 @@ public class RetryEngine<D> {
         this.childrenRetriever = childrenRetriever;
     }
 
-    public D tryUntilGotDesired(Supplier<D> tryToGet) throws UnexpectedException {
+    public D tryUntilGotDesired(Supplier<D> tryToGet, IntConsumer waitFunction) {
         D desired = null;
         boolean waitForChildren = childrenMustHave > 0;
         while (Objects.isNull(desired)) {
             desired = tryToGet.get();
             if (Objects.isNull(desired)) {
                 log("couldn't find it");
-                waitBeforeNextRetry(minutesToWait, null);
+                waitFunction.accept(minutesToWait);
             } else if (waitForChildren) {
                 while (waitForChildren) {
                     List<D> children = childrenRetriever.apply(desired);
                     if (children.size() < childrenMustHave) {
                         log("there is no enough child elements yet");
-                        waitBeforeNextRetry(minutesToWait, null);
+                        waitFunction.accept(minutesToWait);
                     } else {
                         int shorterTime = minutesToWait / 3;
                         waitBeforeNextRetry(shorterTime, "waiting a bit more for courtesy: " + shorterTime + "min");
@@ -53,8 +53,12 @@ public class RetryEngine<D> {
         return desired;
     }
 
+    public D tryUntilGotDesired(Supplier<D> tryToGet) {
+        IntConsumer defaultWaitFunction = time -> waitBeforeNextRetry(time, null);
+        return tryUntilGotDesired(tryToGet, defaultWaitFunction);
+    }
 
-    public void waitBeforeNextRetry(int currentMinutesToWait, String forcedMessage) throws UnexpectedException {
+    public void waitBeforeNextRetry(int currentMinutesToWait, String forcedMessage) {
         String msg = StringUtils.isNotEmpty(forcedMessage)
                 ? forcedMessage
                 : "waiting "+currentMinutesToWait+" minutes before the next try";
@@ -64,7 +68,8 @@ public class RetryEngine<D> {
             TimeUnit.MINUTES.sleep(currentMinutesToWait);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new UnexpectedException("failed TimeUnit.MINUTES.sleep");
+            log("failed TimeUnit.MINUTES.sleep");
+            e.printStackTrace();
         }
     }
 
