@@ -14,6 +14,11 @@ import java.util.stream.Stream;
 
 import static cat.hack3.mangrana.utils.Output.log;
 
+/**
+ * Only applicable to the following format
+ * key1: value1
+ * key:2 value2
+ */
 public class FakeYmlLoader {
 
     private FakeYmlLoader(){}

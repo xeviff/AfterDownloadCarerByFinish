@@ -80,6 +80,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     public void setWorkingWithAJob(boolean workingWithAJob) {
+        log("SETTING workingWithAJob="+workingWithAJob);
         this.workingWithAJob = workingWithAJob;
     }
 

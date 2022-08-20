@@ -6,6 +6,7 @@ import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import java.io.IOException;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
+import static cat.hack3.mangrana.utils.rest.APIInterface.ProtocolURLMark.HTTPS;
 
 /**
  * @deprecated Once the generated classes for client schema are located in the project, this utility is not needed anymore
@@ -63,7 +64,7 @@ public class ClientSchemaGenerator {
     }
 
     private void generate(String host, String uri, String apiKey, String pckg, String className) throws IOException {
-        String schemaUrl = host.concat(uri.concat(apiKey));
+        String schemaUrl = HTTPS.getMark()+host.concat(uri.concat(apiKey));
         ClassGeneratorFromJson generatorFromJson = new ClassGeneratorFromJson();
         generatorFromJson.generateSchema(schemaUrl, pckg, className);
     }

@@ -66,7 +66,9 @@ public class SonarrJobFileLoader {
     }
 
     public void driveBack() {
-        jobFile = shiftFileFolder(jobFile, PATH_DOING, PATH_TODO);
+        if (jobFile.getAbsolutePath().contains(PATH_DOING)) {
+            jobFile = shiftFileFolder(jobFile, PATH_DOING, PATH_TODO);
+        }
     }
 
 }

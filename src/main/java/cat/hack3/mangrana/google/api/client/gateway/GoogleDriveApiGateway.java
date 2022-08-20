@@ -21,6 +21,13 @@ public class GoogleDriveApiGateway {
         service = GoogleDriveUtils.getDriveService();
     }
 
+    public File lookupElementById(String elementId) throws IOException {
+        return service.files()
+                .get(elementId)
+                .setSupportsTeamDrives(true)
+                .execute();
+    }
+
     public File lookupElementByName(String elementName, GoogleElementType type, String relatedTeamDriveId) throws IOException {
         String query = "name = '" + elementName.replace("'","\\'") + "'"
                 + " and trashed=false"

@@ -67,7 +67,8 @@ public class RemoteCopyService {
         log("willing for copy season <"+downloadedFolderName+"> to <"+destinationFullPath+"/"+seasonFolderName+">");
         Supplier<File> checkIfFolderExistFunction = () -> {
             try {
-                return googleDriveApiGateway.lookupElementByName(downloadedFolderName, FOLDER, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+                File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
+                return googleDriveApiGateway.getChildFromParentByName(downloadedFolderName, parentFolder, true);
             } catch (Exception e) {
                 log("could not find yet the folder :"+downloadedFolderName);
                 return null;

@@ -2,6 +2,7 @@ package cat.hack3.mangrana.utils.yml;
 
 
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.utils.Output;
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
 import org.apache.commons.lang.StringUtils;
@@ -9,8 +10,6 @@ import org.apache.commons.lang.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumMap;
-
-import static cat.hack3.mangrana.utils.Output.log;
 
 public class YmlFileLoader {
 
@@ -41,5 +40,9 @@ public class YmlFileLoader {
         } catch (IOException e) {
             throw new IncorrectWorkingReferencesException("couldn't find the config file :(");
         }
+    }
+
+    private static void log(String msg) {
+        Output.log("YmlFileLoader: "+msg);
     }
 }

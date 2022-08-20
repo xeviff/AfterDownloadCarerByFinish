@@ -10,6 +10,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.util.Objects;
 
 import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.utils.rest.APIInterface.ProtocolURLMark.HTTPS;
 
 public class APIProxyBuilderSingleton {
 
@@ -19,7 +20,7 @@ public class APIProxyBuilderSingleton {
 
     private static void init (String host, Class<? extends APIInterface> clazz) {
         log("Initializing Proxy for host "+ host + " ...");
-        UriBuilder fullPath = UriBuilder.fromPath(host);
+        UriBuilder fullPath = UriBuilder.fromPath(HTTPS.getMark()+host);
         ResteasyClient client = (ResteasyClient) ClientBuilder.newClient();
         ResteasyWebTarget target = client.target(fullPath);
         APIInterface apiInterface = target.proxy(clazz);

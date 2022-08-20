@@ -61,7 +61,9 @@ public class SonarrJobHandler implements Runnable {
         try {
             downloadId = sonarrJobFileLoader.getInfo(SONARR_DOWNLOAD_ID);
             log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
-            orchestrator.jobInitiated(downloadId);
+            synchronized (orchestrator) {
+                orchestrator.jobInitiated(downloadId);
+            }
             int episodeCount = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_RELEASE_EPISODECOUNT));
             DownloadType type = episodeCount == 1 ? EPISODE : SEASON;
             int serieId = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_SERIES_ID));
@@ -91,11 +93,13 @@ public class SonarrJobHandler implements Runnable {
             } else {
                 RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL, downloadId);
                 elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue, t -> holdOn());
-                sonarrJobFileLoader.markDoing();
-                orchestrator.setWorkingWithAJob(true);
                 writeElementNameToJobInfo(elementName);
             }
-            orchestrator.jobHasFileName(downloadId);
+            sonarrJobFileLoader.markDoing();
+            synchronized (orchestrator) {
+                orchestrator.setWorkingWithAJob(true);
+                orchestrator.jobHasFileName(downloadId);
+            }
 
             if (EPISODE.equals(type)) {
                 handleEpisode(serieId, elementName);
@@ -109,7 +113,9 @@ public class SonarrJobHandler implements Runnable {
             sonarrJobFileLoader.driveBack();
             e.printStackTrace();
         } finally {
-            orchestrator.jobFinished(downloadId);
+            synchronized (orchestrator) {
+                orchestrator.jobFinished(downloadId);
+            }
         }
     }
 
