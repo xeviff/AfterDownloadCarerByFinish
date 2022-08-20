@@ -13,7 +13,7 @@ import java.util.EnumMap;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.MANAGE_FAILED_DOWNLOADS;
 import static cat.hack3.mangrana.utils.Output.log;
-import static cat.hack3.mangrana.utils.Output.logDate;
+import static cat.hack3.mangrana.utils.Output.logWithDate;
 
 public class DownloadedItemsHandler {
 
@@ -44,8 +44,7 @@ public class DownloadedItemsHandler {
 
         actionHandler.get(ActionType.SONARR_GRAB).handle();
 
-        log("that's all, folks");
-        logDate();
+        logWithDate("that's all, folks");
     }
 
 }

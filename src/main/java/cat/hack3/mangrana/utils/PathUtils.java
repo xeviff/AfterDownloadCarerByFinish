@@ -1,6 +1,8 @@
 package cat.hack3.mangrana.utils;
 
 
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,12 +29,12 @@ public class PathUtils {
         return absolutePath.substring(absolutePath.lastIndexOf('/')+1);
     }
 
-    public static File shiftFileFolder(File jobFile, String folderOrigin, String folderDestination) {
+    public static File shiftFileFolder(File jobFile, SonarrJobFileManager.JobLocation folderOrigin, SonarrJobFileManager.JobLocation folderDestination) {
         try {
             Path newPath = Files.move(
                     jobFile.toPath()
                     , Paths.get(jobFile.getAbsolutePath()
-                            .replaceFirst(folderOrigin, folderDestination)));
+                            .replaceFirst(folderOrigin.getFolderName(), folderDestination.getFolderName())));
             log(MessageFormat.format("moved job file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
             return newPath.toFile();
         } catch (IOException e) {

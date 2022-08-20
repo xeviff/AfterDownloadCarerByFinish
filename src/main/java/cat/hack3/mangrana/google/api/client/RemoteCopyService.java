@@ -3,6 +3,7 @@ package cat.hack3.mangrana.google.api.client;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
+import cat.hack3.mangrana.utils.Output;
 import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
 
@@ -15,7 +16,6 @@ import java.util.function.Supplier;
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.FOLDER;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
-import static cat.hack3.mangrana.utils.Output.log;
 
 public class RemoteCopyService {
 
@@ -70,7 +70,7 @@ public class RemoteCopyService {
                 File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
                 return googleDriveApiGateway.getChildFromParentByName(downloadedFolderName, parentFolder, true);
             } catch (Exception e) {
-                log("could not find yet the folder :"+downloadedFolderName);
+                log("could not find yet the folder: "+downloadedFolderName);
                 return null;
             }
         };
@@ -146,4 +146,7 @@ public class RemoteCopyService {
         return googleDriveApiGateway.createFolder(destinationFolderName, parentFolder.getId());
     }
 
+    private void log (String msg) {
+        Output.log("CopyService: "+msg);
+    }
 }

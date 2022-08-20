@@ -3,7 +3,7 @@ package cat.hack3.mangrana.downloads.workers.sonarr;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.Handler;
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader;
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
@@ -16,9 +16,9 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader.JOBS_DIRECTORY_PATH;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader.PATH_TODO;
-import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.*;
+import static cat.hack3.mangrana.utils.Output.logWithDate;
 
 public class SonarGrabbedDownloadsHandler implements Handler {
 
@@ -31,9 +31,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 30;
     public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 5;
 
-    boolean workingWithAJob=false;
-    List<File> jobFiles;
-    Map<String, String> jobs = new HashMap<>();
+    Map<String, String> jobsState = new HashMap<>();
+    String jobCurrentlyInWork;
 
     public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
@@ -50,12 +49,15 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 
     @Override
     public void handle() {
-        retrieveJobs();
+        moveUncompletedJobsToRetry();
+        List<File> jobFiles = retrieveJobs(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
 //        while (CollectionUtils.isNotEmpty(retrieveJobs()) && !allJobsFinished()) {
             ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
             for (File jobFile : jobFiles) {
                 try {
-                    SonarrJobHandler job = new SonarrJobHandler(configFileLoader, new SonarrJobFileLoader(jobFile), this);
+                    SonarrJobFileManager jobFileManager = new SonarrJobFileManager(jobFile);
+                    if (!jobFileManager.hasInfo()) throw new IncorrectWorkingReferencesException("no valid info at file");
+                    SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                     executor.execute(job);
                 } catch (IOException | IncorrectWorkingReferencesException e) {
                     log("not going to work with " + jobFile.getAbsolutePath());
@@ -64,40 +66,38 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 //        }
     }
 
-    private List<File> retrieveJobs() {
-        log("retrieving job files from to_do folder");
-        File jobsDir = new File(System.getProperty("user.dir") + JOBS_DIRECTORY_PATH + PATH_TODO);
-        File[] files = jobsDir.listFiles();
-        log("found files: "+ (files==null?0: files.length));
-        jobFiles = files!=null
-                ? Arrays.asList(files)
-                : Collections.emptyList();
-        return jobFiles;
-    }
-
     public boolean isWorkingWithAJob() {
-        return workingWithAJob;
+        return jobCurrentlyInWork!=null;
     }
 
-    public void setWorkingWithAJob(boolean workingWithAJob) {
-        log("SETTING workingWithAJob="+workingWithAJob);
-        this.workingWithAJob = workingWithAJob;
+    public boolean isJobWorking(String jobTitle) {
+        return jobTitle.equals(jobCurrentlyInWork);
     }
 
     public void jobInitiated(String downloadId) {
-        jobs.put(downloadId, "initiated");
+        jobsState.put(downloadId, "initiated");
     }
 
-    public void jobHasFileName(String downloadId) {
-        jobs.put(downloadId, "has filename");
+    public void jobHasFileName(String jobTitle) {
+        jobsState.put(jobTitle, "has filename");
     }
 
-    public void jobFinished(String downloadId) {
-        jobs.put(downloadId, "finished");
+    public void jobWorking(String jobTitle) {
+        jobsState.put(jobTitle, "working");
+        jobCurrentlyInWork=jobTitle;
+    }
+
+    public void jobFinished(String jobTitle) {
+        jobsState.put(jobTitle, "finished");
+        jobCurrentlyInWork=null;
     }
 
     private boolean allJobsFinished() {
-        return !jobs.isEmpty() && jobs.values().stream().allMatch(state -> state.equals("finished"));
+        return !jobsState.isEmpty() && jobsState.values().stream().allMatch(state -> state.equals("finished"));
+    }
+
+    private void log (String msg) {
+        logWithDate("Orchestrator: "+msg);
     }
 
 }

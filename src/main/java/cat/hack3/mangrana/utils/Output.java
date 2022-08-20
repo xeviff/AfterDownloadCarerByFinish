@@ -9,8 +9,9 @@ public class Output {
         System.out.println(msg);
     }
 
-    public static void logDate() {
+    public static void logWithDate(String msg) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        log(dateFormat.format(new Date()));
+        log(msg+" - "+dateFormat.format(new Date()));
     }
+
 }

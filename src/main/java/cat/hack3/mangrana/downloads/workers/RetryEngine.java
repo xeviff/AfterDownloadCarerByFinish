@@ -1,22 +1,20 @@
 package cat.hack3.mangrana.downloads.workers;
 
-import cat.hack3.mangrana.utils.Output;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
-
-import static cat.hack3.mangrana.utils.Output.logDate;
 
 public class RetryEngine<D> {
 
     private final int minutesToWait;
     private final ChildrenRequirements<D> childrenRequirements;
-    private String downloadId;
+    private final Consumer<String> logger;
 
     public static class ChildrenRequirements<D> {
         final int children;
@@ -30,13 +28,18 @@ public class RetryEngine<D> {
         }
     }
 
-    public RetryEngine(int minutesToWait, String downloadId) {
-        this(minutesToWait, downloadId, new ChildrenRequirements<>(0, null, null));
+    public RetryEngine(int minutesToWait, Consumer<String> logger) {
+        this(minutesToWait, new ChildrenRequirements<>(0, null, null), logger);
     }
-    public RetryEngine(int minutesToWait, String downloadId, ChildrenRequirements<D> childrenRequirements) {
+    public RetryEngine(int minutesToWait, ChildrenRequirements<D> childrenRequirements, Consumer<String> logger) {
         this.minutesToWait = minutesToWait;
         this.childrenRequirements = childrenRequirements;
-        this.downloadId = downloadId;
+        this.logger = logger;
+    }
+
+    public D tryUntilGotDesired(Supplier<D> tryToGet) {
+        IntConsumer defaultWaitFunction = time -> waitBeforeNextRetry(time, null);
+        return tryUntilGotDesired(tryToGet, defaultWaitFunction);
     }
 
     public D tryUntilGotDesired(Supplier<D> tryToGet, IntConsumer waitFunction) {
@@ -76,17 +79,11 @@ public class RetryEngine<D> {
         }
     }
 
-    public D tryUntilGotDesired(Supplier<D> tryToGet) {
-        IntConsumer defaultWaitFunction = time -> waitBeforeNextRetry(time, null);
-        return tryUntilGotDesired(tryToGet, defaultWaitFunction);
-    }
-
     public void waitBeforeNextRetry(int currentMinutesToWait, String forcedMessage) {
         String msg = StringUtils.isNotEmpty(forcedMessage)
                 ? forcedMessage
                 : "waiting "+currentMinutesToWait+" minutes before the next try";
         log(msg);
-        logDate();
         try {
             TimeUnit.MINUTES.sleep(currentMinutesToWait);
         } catch (InterruptedException e) {
@@ -97,7 +94,7 @@ public class RetryEngine<D> {
     }
 
     private void log (String msg) {
-        Output.log(downloadId+"<RetryEngine>: "+msg);
+        logger.accept("<RetryEngine> "+msg);
     }
 
 }

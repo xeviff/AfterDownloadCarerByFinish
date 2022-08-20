@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.CLOUD_WAIT_INTERVAL;
 import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.SONARR_WAIT_INTERVAL;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileLoader.GrabInfo.*;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.GrabInfo.*;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.EPISODE;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.SEASON;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
@@ -42,63 +42,67 @@ public class SonarrJobHandler implements Runnable {
     GoogleDriveApiGateway googleDriveApiGateway;
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
-    SonarrJobFileLoader sonarrJobFileLoader;
+    SonarrJobFileManager sonarrJobFileManager;
 
-    String downloadId="-not_set-";
+    String jobTitle="-not_set-";
     final SonarGrabbedDownloadsHandler orchestrator;
 
-    public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFileLoader sonarrJobFileLoader, SonarGrabbedDownloadsHandler caller) throws IOException {
+    public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFileManager sonarrJobFileManager, SonarGrabbedDownloadsHandler caller) throws IOException {
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         googleDriveApiGateway = new GoogleDriveApiGateway();
         serieRefresher = new SerieRefresher(configFileLoader);
-        this.sonarrJobFileLoader = sonarrJobFileLoader;
+        this.sonarrJobFileManager = sonarrJobFileManager;
         orchestrator = caller;
     }
 
     @Override
     public void run() {
         try {
-            downloadId = sonarrJobFileLoader.getInfo(SONARR_DOWNLOAD_ID);
-            log("going to handle the so called: "+sonarrJobFileLoader.getInfo(SONARR_RELEASE_TITLE));
+            String fullTitle = sonarrJobFileManager.getInfo(SONARR_RELEASE_TITLE);
+            jobTitle = fullTitle.substring(0, 38)+"..";
+            log("going to handle the so called: "+fullTitle);
             synchronized (orchestrator) {
-                orchestrator.jobInitiated(downloadId);
+                orchestrator.jobInitiated(jobTitle);
             }
-            int episodeCount = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_RELEASE_EPISODECOUNT));
+            String downloadId = sonarrJobFileManager.getInfo(SONARR_DOWNLOAD_ID);
+            int episodeCount = Integer.parseInt(sonarrJobFileManager.getInfo(SONARR_RELEASE_EPISODECOUNT));
             DownloadType type = episodeCount == 1 ? EPISODE : SEASON;
-            int serieId = Integer.parseInt(sonarrJobFileLoader.getInfo(SONARR_SERIES_ID));
-            String fileName = sonarrJobFileLoader.getInfo(JAVA_FILENAME);
-
-            Supplier<String> getOutputFromQueue = () -> {
-                log("searching from Sonarr Queue downloadId="+downloadId);
-                try {
-                    SonarrQueue queue = sonarrApiGateway.getQueue();
-                    String outputPath = queue.getRecords()
-                            .stream()
-                            .filter(rcd -> downloadId.equals(rcd.getDownloadId()))
-                            .findFirst()
-                            .orElseThrow(() -> new NoSuchElementException("element not found in queue"))
-                            .getOutputPath();
-                    return PathUtils.getCurrentFromFullPath(outputPath);
-                } catch (NoSuchElementException e) {
-                    log("not found yet on queue, will retry later");
-                    return null;
-                }
-            };
+            int serieId = Integer.parseInt(sonarrJobFileManager.getInfo(SONARR_SERIES_ID));
+            String fileName = sonarrJobFileManager.getInfo(JAVA_FILENAME);
 
             String elementName;
             if (StringUtils.isNotEmpty(fileName)) {
                 log("retrieved cached element name from file :D -> "+fileName);
                 elementName = fileName;
             } else {
-                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL, downloadId);
-                elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue, t -> holdOn());
+                Supplier<String> getOutputFromQueue = () -> {
+                    logWhenActive("searching from Sonarr Queue downloadId="+downloadId);
+                    try {
+                        SonarrQueue queue = sonarrApiGateway.getQueue();
+                        String outputPath = queue.getRecords()
+                                .stream()
+                                .filter(rcd -> downloadId.equals(rcd.getDownloadId()))
+                                .findFirst()
+                                .orElseThrow(() -> new NoSuchElementException("element not found in queue"))
+                                .getOutputPath();
+                        return PathUtils.getCurrentFromFullPath(outputPath);
+                    } catch (NoSuchElementException e) {
+                        logWhenActive("not found "+downloadId+" yet on queue, will retry later");
+                        return null;
+                    }
+                };
+                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL, this::logWhenActive);
+                elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
                 writeElementNameToJobInfo(elementName);
             }
-            sonarrJobFileLoader.markDoing();
             synchronized (orchestrator) {
-                orchestrator.setWorkingWithAJob(true);
-                orchestrator.jobHasFileName(downloadId);
+                orchestrator.jobHasFileName(jobTitle);
+                if (orchestrator.isWorkingWithAJob()) {
+                    holdOn();
+                }
+                sonarrJobFileManager.markDoing();
+                orchestrator.jobWorking(jobTitle);
             }
 
             if (EPISODE.equals(type)) {
@@ -106,15 +110,15 @@ public class SonarrJobHandler implements Runnable {
             } else {
                 handleSeason(serieId, elementName, episodeCount);
             }
-            sonarrJobFileLoader.markDone();
+            sonarrJobFileManager.markDone();
             resumeOtherJobs();
         } catch (Exception e) {
             log("something wrong: "+e.getMessage());
-            sonarrJobFileLoader.driveBack();
+            sonarrJobFileManager.driveBack();
             e.printStackTrace();
         } finally {
             synchronized (orchestrator) {
-                orchestrator.jobFinished(downloadId);
+                orchestrator.jobFinished(jobTitle);
             }
         }
     }
@@ -122,7 +126,7 @@ public class SonarrJobHandler implements Runnable {
     private void handleEpisode(int serieId, String fileName) throws IOException, IncorrectWorkingReferencesException {
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromEpisode(fileName);
-        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2, downloadId));
+        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2, this::log));
         copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
@@ -131,8 +135,10 @@ public class SonarrJobHandler implements Runnable {
         Function<File, List<File>> childrenRetriever = file ->
                 googleDriveApiGateway.getChildrenFromParent(file, false);
         Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
-        RetryEngine<File> retryer = new RetryEngine<>(CLOUD_WAIT_INTERVAL, downloadId,
-                new RetryEngine.ChildrenRequirements<>(episodesMustHave, childrenRetriever, fileNameConstraint));
+        RetryEngine<File> retryer = new RetryEngine<>(
+                CLOUD_WAIT_INTERVAL,
+                new RetryEngine.ChildrenRequirements<>(episodesMustHave, childrenRetriever, fileNameConstraint),
+                this::log);
         copyService.setRetryEngine(retryer);
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
@@ -143,7 +149,7 @@ public class SonarrJobHandler implements Runnable {
 
     private void writeElementNameToJobInfo(String elementName) throws IOException {
         try (Writer output = new BufferedWriter(
-                new FileWriter(sonarrJobFileLoader.getFile().getAbsolutePath(), true))) {
+                new FileWriter(sonarrJobFileManager.getFile().getAbsolutePath(), true))) {
             output.append(JAVA_FILENAME.name().toLowerCase().concat(": "+elementName));
             log("persisted elementName to job file -> "+elementName);
         }
@@ -161,11 +167,11 @@ public class SonarrJobHandler implements Runnable {
                 }
                 Instant afterWait = Instant.now();
                 if (Duration.between(beforeWait, afterWait).toMinutes()<1) {
-                    log("seems that things are going too fast, sleeping 2 minutes more");
-                    TimeUnit.MINUTES.sleep(2);
+                    log("seems that things are going too fast, sleeping few seconds");
+                    TimeUnit.SECONDS.sleep(30);
                 }
             } catch (InterruptedException e) {
-                log("could not put on waiting the job " + downloadId);
+                log("could not put on waiting the job " + jobTitle);
                 Thread.currentThread().interrupt();
                 e.printStackTrace();
             }
@@ -176,12 +182,18 @@ public class SonarrJobHandler implements Runnable {
     public void resumeOtherJobs(){
         log("job finished and will order a global resume");
         synchronized (orchestrator) {
-            orchestrator.setWorkingWithAJob(false);
             orchestrator.notifyAll();
         }
     }
 
     private void log(String msg) {
-        Output.log(downloadId+": "+msg);
+        Output.log(jobTitle+": "+msg);
+    }
+
+    private void logWhenActive(String msg){
+        if (!orchestrator.isWorkingWithAJob()
+                || orchestrator.isJobWorking(jobTitle)) {
+            log(msg);
+        }
     }
 }
