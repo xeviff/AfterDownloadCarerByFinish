@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.*;
@@ -51,7 +52,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public void handle() {
         moveUncompletedJobsToRetry();
         List<File> jobFiles = retrieveJobs(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
-//        while (CollectionUtils.isNotEmpty(retrieveJobs()) && !allJobsFinished()) {
+        if (!jobFiles.isEmpty()) {
+//       { while (CollectionUtils.isNotEmpty(retrieveJobs()) && !allJobsFinished()) {
             ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
             for (File jobFile : jobFiles) {
                 try {
@@ -59,11 +61,13 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                     if (!jobFileManager.hasInfo()) throw new IncorrectWorkingReferencesException("no valid info at file");
                     SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                     executor.execute(job);
-                } catch (IOException | IncorrectWorkingReferencesException e) {
+                    TimeUnit.SECONDS.sleep(30);
+                } catch (IOException | IncorrectWorkingReferencesException | InterruptedException e) {
                     log("not going to work with " + jobFile.getAbsolutePath());
+                    if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                 }
             }
-//        }
+        }
     }
 
     public boolean isWorkingWithAJob() {
@@ -83,11 +87,13 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     public void jobWorking(String jobTitle) {
+        log("WORKING WITH "+jobTitle);
         jobsState.put(jobTitle, "working");
         jobCurrentlyInWork=jobTitle;
     }
 
     public void jobFinished(String jobTitle) {
+        log("NOT WORKING ANYMORE WITH "+jobTitle);
         jobsState.put(jobTitle, "finished");
         jobCurrentlyInWork=null;
     }
@@ -97,7 +103,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     private void log (String msg) {
-        logWithDate("Orchestrator: "+msg);
+        logWithDate("ORCHESTRATOR: "+msg);
     }
 
 }

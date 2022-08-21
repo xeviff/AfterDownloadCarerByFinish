@@ -180,7 +180,7 @@ public class SonarrJobHandler implements Runnable {
     }
 
     public void resumeOtherJobs(){
-        log("job finished and will order a global resume");
+        log("job FINISHED and will order a GLOBAL RESUME");
         synchronized (orchestrator) {
             orchestrator.notifyAll();
         }

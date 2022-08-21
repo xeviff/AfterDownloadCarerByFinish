@@ -1,5 +1,6 @@
 package cat.hack3.mangrana.downloads.workers;
 
+import cat.hack3.mangrana.utils.Output;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
@@ -72,7 +73,7 @@ public class RetryEngine<D> {
                 }
                 else {
                     waitForChildren = false;
-                    int shorterTime = minutesToWait / 3;
+                    int shorterTime = 2;
                     waitBeforeNextRetry(shorterTime, "waiting a bit more for courtesy: " + shorterTime + "min");
                 }
             }
@@ -82,7 +83,7 @@ public class RetryEngine<D> {
     public void waitBeforeNextRetry(int currentMinutesToWait, String forcedMessage) {
         String msg = StringUtils.isNotEmpty(forcedMessage)
                 ? forcedMessage
-                : "waiting "+currentMinutesToWait+" minutes before the next try";
+                : "waiting "+currentMinutesToWait+" minutes before the next try - "+ Output.getCurrentTime();
         log(msg);
         try {
             TimeUnit.MINUTES.sleep(currentMinutesToWait);
