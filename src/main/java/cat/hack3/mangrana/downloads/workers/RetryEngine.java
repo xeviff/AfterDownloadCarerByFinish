@@ -73,7 +73,7 @@ public class RetryEngine<D> {
                 }
                 else {
                     waitForChildren = false;
-                    int shorterTime = 2;
+                    int shorterTime = 1;
                     waitBeforeNextRetry(shorterTime, "waiting a bit more for courtesy: " + shorterTime + "min");
                 }
             }

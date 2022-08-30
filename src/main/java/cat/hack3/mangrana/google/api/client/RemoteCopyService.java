@@ -99,7 +99,7 @@ public class RemoteCopyService {
         if (Objects.isNull(downloadedFile)) throw new NoSuchElementException("definitely, could not retrieve the video file");
 
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
-        File destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationSerieFolderName, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
+        File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationSerieFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
         copySeasonEpisode(downloadedFile, seasonFolder.getId());
     }
