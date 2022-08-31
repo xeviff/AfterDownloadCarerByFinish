@@ -3,29 +3,29 @@ package cat.hack3.mangrana.downloads.workers.sonarr;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.Handler;
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager;
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
-import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.*;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.moveUncompletedJobsToRetry;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.retrieveJobFiles;
 import static cat.hack3.mangrana.utils.Output.logWithDate;
 
 public class SonarGrabbedDownloadsHandler implements Handler {
 
     ConfigFileLoader configFileLoader;
     SonarrApiGateway sonarrApiGateway;
-    GoogleDriveApiGateway googleDriveApiGateway;
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
@@ -38,7 +38,6 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
-        googleDriveApiGateway = new GoogleDriveApiGateway();
         serieRefresher = new SerieRefresher(configFileLoader);
         this.configFileLoader = configFileLoader;
     }
@@ -51,20 +50,45 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     @Override
     public void handle() {
         moveUncompletedJobsToRetry();
-        List<File> jobFiles = retrieveJobs(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
+        handleJobsReadyToCopy();
+        boolean test=true;
+        if (test) return;
+        while (true) {
+            List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
+            if (!jobFiles.isEmpty()) {
+                ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
+                for (File jobFile : jobFiles) {
+                    try {
+                        SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
+                        if (!jobFileManager.hasInfo()) {
+                            throw new IncorrectWorkingReferencesException("no valid info at file");
+                        }
+                        SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
+                        executor.execute(job);
+                        Thread.sleep(5000);
+                    } catch (IOException | IncorrectWorkingReferencesException | InterruptedException e) {
+                        log("not going to work with " + jobFile.getAbsolutePath());
+                        if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleJobsReadyToCopy() {
+        List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
         if (!jobFiles.isEmpty()) {
-//       { while (CollectionUtils.isNotEmpty(retrieveJobs()) && !allJobsFinished()) {
-            ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
             for (File jobFile : jobFiles) {
                 try {
-                    SonarrJobFileManager jobFileManager = new SonarrJobFileManager(jobFile);
-                    if (!jobFileManager.hasInfo()) throw new IncorrectWorkingReferencesException("no valid info at file");
+                    SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
+                    if (!jobFileManager.hasInfo()) {
+                        throw new IncorrectWorkingReferencesException("no valid info at file");
+                    }
                     SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
-                    executor.execute(job);
-                    TimeUnit.SECONDS.sleep(30);
-                } catch (IOException | IncorrectWorkingReferencesException | InterruptedException e) {
+                    job.tryToMoveIfPossible();
+
+                } catch (IOException | IncorrectWorkingReferencesException e) {
                     log("not going to work with " + jobFile.getAbsolutePath());
-                    if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                 }
             }
         }

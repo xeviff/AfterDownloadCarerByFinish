@@ -15,6 +15,8 @@ import static cat.hack3.mangrana.utils.Output.log;
 
 public class SonarrJobFileManager {
 
+    private SonarrJobFileManager(){}
+
     public static final String JOBS_DIRECTORY_PATH = "/jobs/";
 
     public static void moveUncompletedJobsToRetry() {
@@ -26,7 +28,7 @@ public class SonarrJobFileManager {
         uncompleted.forEach(file -> PathUtils.shiftFileFolder(file, PATH_DOING, PATH_TODO));
     }
 
-    public static List<File> retrieveJobs(String fileIdentifierRegex) {
+    public static List<File> retrieveJobFiles(String fileIdentifierRegex) {
         log("retrieving job files from to_do folder");
         File jobsDir = new File(getAbsolutePath(PATH_TODO));
         File[] files = jobsDir.listFiles();

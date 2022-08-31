@@ -19,24 +19,30 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_SERIES_FOLDER_ID;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_TEAM_DRIVE_ID;
 import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.CLOUD_WAIT_INTERVAL;
 import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.SONARR_WAIT_INTERVAL;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.GrabInfo.*;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.EPISODE;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.SEASON;
+import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
 public class SonarrJobHandler implements Runnable {
 
     public enum DownloadType {SEASON, EPISODE}
+    ConfigFileLoader configFileLoader;
     SonarrApiGateway sonarrApiGateway;
     GoogleDriveApiGateway googleDriveApiGateway;
     RemoteCopyService copyService;
@@ -46,7 +52,16 @@ public class SonarrJobHandler implements Runnable {
     String jobTitle="-not_set-";
     final SonarGrabbedDownloadsHandler orchestrator;
 
+    private String fullTitle;
+    private String elementName;
+    private DownloadType type;
+    private int serieId;
+    private String fileName;
+    private int episodeCount;
+    private String downloadId;
+
     public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFile sonarrJobFile, SonarGrabbedDownloadsHandler caller) throws IOException {
+        this.configFileLoader = configFileLoader;
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         googleDriveApiGateway = new GoogleDriveApiGateway();
@@ -58,19 +73,12 @@ public class SonarrJobHandler implements Runnable {
     @Override
     public void run() {
         try {
-            String fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
-            jobTitle = fullTitle.substring(0, 38)+"..";
+            loadInfoFromJobFile();
             log("going to handle the so called: "+fullTitle);
             synchronized (orchestrator) {
                 orchestrator.jobInitiated(jobTitle);
             }
-            String downloadId = sonarrJobFile.getInfo(SONARR_DOWNLOAD_ID);
-            int episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SONARR_RELEASE_EPISODECOUNT));
-            DownloadType type = episodeCount == 1 ? EPISODE : SEASON;
-            int serieId = Integer.parseInt(sonarrJobFile.getInfo(SONARR_SERIES_ID));
-            String fileName = sonarrJobFile.getInfo(JAVA_FILENAME);
 
-            String elementName;
             if (StringUtils.isNotEmpty(fileName)) {
                 log("retrieved cached element name from file :D -> "+fileName);
                 elementName = fileName;
@@ -105,9 +113,9 @@ public class SonarrJobHandler implements Runnable {
             }
 
             if (EPISODE.equals(type)) {
-                handleEpisode(serieId, elementName);
+                handleEpisode(true);
             } else {
-                handleSeason(serieId, elementName, episodeCount);
+                handleSeason(true);
             }
             sonarrJobFile.markDone();
         } catch (Exception e) {
@@ -122,27 +130,61 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-    private void handleEpisode(int serieId, String fileName) throws IOException, IncorrectWorkingReferencesException {
+    public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException {
+        loadInfoFromJobFile();
+        if (StringUtils.isEmpty(fileName)) {
+            log("this job has not a fileName retrieved, so it cannot be processed. ");
+        } else {
+            elementName = fileName;
+            log("going to try handle the following element: "+elementName);
+            if (EPISODE.equals(type)) {
+                File episode = googleDriveApiGateway.lookupElementByName(elementName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+                if (Objects.isNull(episode)) throw new NoSuchElementException("episode not downloaded yet");
+                handleEpisode(false);
+            } else {
+                File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
+                File season = googleDriveApiGateway.getChildFromParentByName(elementName, parentFolder, true);
+                if (Objects.isNull(season)) throw new NoSuchElementException("season not downloaded yet");
+                List<File> episodes = googleDriveApiGateway.getChildrenFromParent(season, false);
+                if (episodes.size() < episodeCount) throw new NoSuchElementException(MessageFormat.format("some episode is missing: expected {0}, got {1}", episodeCount, episodes.size()));
+                handleSeason(false);
+            }
+        }
+    }
+
+    private void loadInfoFromJobFile() {
+        fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
+        jobTitle = fullTitle.substring(0, 38)+"..";
+        downloadId = sonarrJobFile.getInfo(SONARR_DOWNLOAD_ID);
+        episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SONARR_RELEASE_EPISODECOUNT));
+        type = episodeCount == 1 ? EPISODE : SEASON;
+        serieId = Integer.parseInt(sonarrJobFile.getInfo(SONARR_SERIES_ID));
+        fileName = sonarrJobFile.getInfo(JAVA_FILENAME);
+    }
+
+    private void handleEpisode(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException {
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
-        String seasonFolderName = getSeasonFolderNameFromEpisode(fileName);
-        copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2, this::log));
+        String seasonFolderName = getSeasonFolderNameFromEpisode(elementName);
+        if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2, this::log));
         copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
 
-    private void handleSeason(int serieId, String folderName, int episodesMustHave) throws IOException, IncorrectWorkingReferencesException {
-        Function<File, List<File>> childrenRetriever = file ->
-                googleDriveApiGateway.getChildrenFromParent(file, false);
-        Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
-        RetryEngine<File> retryer = new RetryEngine<>(
-                CLOUD_WAIT_INTERVAL,
-                new RetryEngine.ChildrenRequirements<>(episodesMustHave, childrenRetriever, fileNameConstraint),
-                this::log);
-        copyService.setRetryEngine(retryer);
+    private void handleSeason(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException {
+        if (waitUntilExists) {
+            Function<File, List<File>> childrenRetriever = file ->
+                    googleDriveApiGateway.getChildrenFromParent(file, false);
+            Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
+            RetryEngine<File> retryer = new RetryEngine<>(
+                    CLOUD_WAIT_INTERVAL,
+                    new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint),
+                    this::log);
+            copyService.setRetryEngine(retryer);
+        }
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
-        String seasonFolderName = getSeasonFolderNameFromSeason(folderName);
-        copyService.copySeasonFromDownloadToItsLocation(folderName, serie.getPath(), seasonFolderName);
+        String seasonFolderName = getSeasonFolderNameFromSeason(elementName);
+        copyService.copySeasonFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
 
