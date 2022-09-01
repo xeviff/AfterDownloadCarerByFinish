@@ -6,6 +6,7 @@ import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.exception.MissingElementException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 
@@ -83,6 +84,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     private void handleJobsReadyToCopy() {
+        log("in first place, going to try to copy those elements that are already downloaded");
         List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
@@ -93,7 +95,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                     }
                     SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                     job.tryToMoveIfPossible();
-                } catch (IOException | IncorrectWorkingReferencesException e) {
+                } catch (IOException | IncorrectWorkingReferencesException | NoSuchElementException |
+                         MissingElementException e) {
                     log("not going to work with " + jobFile.getAbsolutePath());
                 }
             }

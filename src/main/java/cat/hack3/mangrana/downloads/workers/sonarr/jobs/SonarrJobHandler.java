@@ -5,6 +5,7 @@ import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.sonarr.SerieRefresher;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.exception.MissingElementException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
@@ -130,7 +131,7 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-    public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException {
+    public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, MissingElementException {
         loadInfoFromJobFile();
         if (StringUtils.isEmpty(fileName)) {
             log("this job has not a fileName retrieved, so it cannot be processed. ");
@@ -138,15 +139,21 @@ public class SonarrJobHandler implements Runnable {
             elementName = fileName;
             log("going to try handle the following element: "+elementName);
             if (EPISODE.equals(type)) {
-                File episode = googleDriveApiGateway.lookupElementByName(elementName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
-                if (Objects.isNull(episode)) throw new NoSuchElementException("episode not downloaded yet");
+                try {
+                    googleDriveApiGateway.lookupElementByName(elementName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+                } catch (NoSuchElementException e) {
+                    throw new NoSuchElementException("episode not downloaded yet");
+                }
                 handleEpisode(false);
             } else {
-                File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
-                File season = googleDriveApiGateway.getChildFromParentByName(elementName, parentFolder, true);
-                if (Objects.isNull(season)) throw new NoSuchElementException("season not downloaded yet");
-                List<File> episodes = googleDriveApiGateway.getChildrenFromParent(season, false);
-                if (episodes.size() < episodeCount) throw new NoSuchElementException(MessageFormat.format("some episode is missing: expected {0}, got {1}", episodeCount, episodes.size()));
+                try {
+                    File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
+                    File season = googleDriveApiGateway.getChildFromParentByName(elementName, parentFolder, true);
+                    List<File> episodes = googleDriveApiGateway.getChildrenFromParent(season, false);
+                    if (episodes.size() < episodeCount) throw new MissingElementException(MessageFormat.format("some episode is missing: expected {0}, got {1}", episodeCount, episodes.size()));
+                } catch (Exception e) {
+                    throw new NoSuchElementException("season not downloaded yet");
+                }
                 handleSeason(false);
             }
             sonarrJobFile.markDone();
