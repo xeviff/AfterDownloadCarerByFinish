@@ -149,6 +149,7 @@ public class SonarrJobHandler implements Runnable {
                 if (episodes.size() < episodeCount) throw new NoSuchElementException(MessageFormat.format("some episode is missing: expected {0}, got {1}", episodeCount, episodes.size()));
                 handleSeason(false);
             }
+            sonarrJobFile.markDone();
         }
     }
 

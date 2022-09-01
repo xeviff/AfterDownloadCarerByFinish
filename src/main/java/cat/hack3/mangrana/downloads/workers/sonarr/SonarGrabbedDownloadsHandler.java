@@ -11,9 +11,7 @@ import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,6 +31,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 5;
 
     Map<String, String> jobsState = new HashMap<>();
+    Set<String> handlingFiles = new HashSet<>();
     String jobCurrentlyInWork;
 
     public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
@@ -51,13 +50,15 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public void handle() {
         moveUncompletedJobsToRetry();
         handleJobsReadyToCopy();
-        boolean test=true;
-        if (test) return;
         while (true) {
             List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
             if (!jobFiles.isEmpty()) {
                 ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
                 for (File jobFile : jobFiles) {
+                    if (handlingFiles.contains(jobFile.getName())) {
+                        log("file already in treatment, ignoring... "+jobFile.getName());
+                        continue;
+                    }
                     try {
                         SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
                         if (!jobFileManager.hasInfo()) {
@@ -65,12 +66,18 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                         }
                         SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                         executor.execute(job);
+                        handlingFiles.add(jobFile.getName());
                         Thread.sleep(5000);
                     } catch (IOException | IncorrectWorkingReferencesException | InterruptedException e) {
                         log("not going to work with " + jobFile.getAbsolutePath());
                         if (e instanceof InterruptedException) Thread.currentThread().interrupt();
                     }
                 }
+            }
+            try {
+                Thread.sleep(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -86,7 +93,6 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                     }
                     SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                     job.tryToMoveIfPossible();
-
                 } catch (IOException | IncorrectWorkingReferencesException e) {
                     log("not going to work with " + jobFile.getAbsolutePath());
                 }
