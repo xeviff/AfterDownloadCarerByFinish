@@ -9,17 +9,22 @@ import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.MissingElementException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.IMMORTAL_PROCESS;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.moveUncompletedJobsToRetry;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.retrieveJobFiles;
 import static cat.hack3.mangrana.utils.Output.logWithDate;
+import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
+import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
 public class SonarGrabbedDownloadsHandler implements Handler {
 
@@ -28,10 +33,11 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
-    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 30;
+    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 15;
     public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 5;
 
     Map<String, String> jobsState = new HashMap<>();
+    int reportDelayCounter = 0;
     Set<String> handlingFiles = new HashSet<>();
     String jobCurrentlyInWork;
 
@@ -51,56 +57,72 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public void handle() {
         moveUncompletedJobsToRetry();
         handleJobsReadyToCopy();
-        while (true) {
-            List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
-            if (!jobFiles.isEmpty()) {
-                ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
-                for (File jobFile : jobFiles) {
-                    if (handlingFiles.contains(jobFile.getName())) {
-                        log("file already in treatment, ignoring... "+jobFile.getName());
-                        continue;
-                    }
-                    try {
-                        SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
-                        if (!jobFileManager.hasInfo()) {
-                            throw new IncorrectWorkingReferencesException("no valid info at file");
-                        }
-                        SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
-                        executor.execute(job);
-                        handlingFiles.add(jobFile.getName());
-                        Thread.sleep(5000);
-                    } catch (IOException | IncorrectWorkingReferencesException | InterruptedException e) {
-                        log("not going to work with " + jobFile.getAbsolutePath());
-                        if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-                    }
-                }
-            }
-            try {
-                Thread.sleep(5 * 60 * 1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        handleRestOfJobs();
     }
 
     private void handleJobsReadyToCopy() {
-        log("in first place, going to try to copy those elements that are already downloaded");
+        simpleLog(">>> in first place, going to try to copy those elements that are already downloaded <<<");
         List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
+                SonarrJobHandler job = null;
                 try {
                     SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
                     if (!jobFileManager.hasInfo()) {
                         throw new IncorrectWorkingReferencesException("no valid info at file");
                     }
-                    SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
+                    job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                     job.tryToMoveIfPossible();
                 } catch (IOException | IncorrectWorkingReferencesException | NoSuchElementException |
                          MissingElementException e) {
-                    log("not going to work with " + jobFile.getAbsolutePath());
+                    String identifier = jobFile.getAbsolutePath();
+                    if (Objects.nonNull(job) && StringUtils.isNotEmpty(job.getFullTitle()))
+                        identifier = job.getFullTitle();
+                    simpleLog("not going to work now with " + identifier);
                 }
             }
         }
+        simpleLog(">>> finished --check and copy right away if possible-- round, now will start the normal process <<<");
+    }
+
+    private void handleRestOfJobs() {
+        boolean keepLooping = true;
+        while (keepLooping) {
+            List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
+            if (!jobFiles.isEmpty()) {
+                ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
+                handleJobs(jobFiles, executor);
+            }
+            waitMinutes(5);
+            keepLooping = Boolean.parseBoolean(configFileLoader.getConfig(IMMORTAL_PROCESS));
+        }
+    }
+
+    private void handleJobs(List<File> jobFiles, ExecutorService executor) {
+        long filesIncorporated = 0;
+        long filesIgnored = 0;
+        for (File jobFile : jobFiles) {
+            if (handlingFiles.contains(jobFile.getName())) {
+                filesIgnored++;
+                continue;
+            }
+            try {
+                SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
+                if (!jobFileManager.hasInfo()) {
+                    throw new IncorrectWorkingReferencesException("no valid info at file");
+                }
+                SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
+                executor.execute(job);
+                handlingFiles.add(jobFile.getName());
+                filesIncorporated++;
+                waitSeconds(5);
+            } catch (IOException | IncorrectWorkingReferencesException e) {
+                log("not going to work with " + jobFile.getAbsolutePath());
+            }
+        }
+        log(MessageFormat.format("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
+                filesIncorporated, filesIgnored));
+        resumeJobsLogPrint();
     }
 
     public boolean isWorkingWithAJob() {
@@ -125,14 +147,30 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         jobCurrentlyInWork=jobTitle;
     }
 
-    public void jobFinished(String jobTitle) {
+    public void jobFinished(String jobTitle, String fileName) {
         log("NOT WORKING ANYMORE WITH "+jobTitle);
         jobsState.put(jobTitle, "finished");
+        handlingFiles.remove(fileName);
         jobCurrentlyInWork=null;
     }
 
-    private boolean allJobsFinished() {
-        return !jobsState.isEmpty() && jobsState.values().stream().allMatch(state -> state.equals("finished"));
+    private void resumeJobsLogPrint() {
+        if (reportDelayCounter == 10) {
+            simpleLog("**** RESUME JOBS ****");
+            this.jobsState.forEach((jobName, state) ->
+                    simpleLog(MessageFormat
+                            .format("Job: {0} | current state: {1}"
+                                    , jobName, state))
+            );
+            reportDelayCounter = 0;
+            simpleLog("**** RESUME JOBS ****");
+        } else {
+            reportDelayCounter++;
+        }
+    }
+
+    private void simpleLog (String msg) {
+        log(msg);
     }
 
     private void log (String msg) {

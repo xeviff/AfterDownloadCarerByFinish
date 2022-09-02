@@ -3,6 +3,7 @@ package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 import cat.hack3.mangrana.utils.PathUtils;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -29,10 +30,9 @@ public class SonarrJobFileManager {
     }
 
     public static List<File> retrieveJobFiles(String fileIdentifierRegex) {
-        log("retrieving job files from to_do folder");
         File jobsDir = new File(getAbsolutePath(PATH_TODO));
         File[] files = jobsDir.listFiles();
-        log("found files: "+ (files==null?0: files.length));
+        log(MessageFormat.format("retrieved {0} job files from <to_do> folder", (files==null?0: files.length)));
         return files==null
                 ? Collections.emptyList()
                 : Arrays.stream(files)

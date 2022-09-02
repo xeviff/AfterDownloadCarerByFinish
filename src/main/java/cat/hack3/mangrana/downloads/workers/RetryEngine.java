@@ -1,18 +1,20 @@
 package cat.hack3.mangrana.downloads.workers;
 
-import cat.hack3.mangrana.utils.Output;
-import org.apache.commons.lang.StringUtils;
-
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
+import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
+import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
+
 public class RetryEngine<D> {
 
+    private final String title;
     private final int minutesToWait;
     private final ChildrenRequirements<D> childrenRequirements;
     private final Consumer<String> logger;
@@ -29,17 +31,18 @@ public class RetryEngine<D> {
         }
     }
 
-    public RetryEngine(int minutesToWait, Consumer<String> logger) {
-        this(minutesToWait, new ChildrenRequirements<>(0, null, null), logger);
+    public RetryEngine(String title, int minutesToWait, Consumer<String> logger) {
+        this(title, minutesToWait, new ChildrenRequirements<>(0, null, null), logger);
     }
-    public RetryEngine(int minutesToWait, ChildrenRequirements<D> childrenRequirements, Consumer<String> logger) {
+    public RetryEngine(String title, int minutesToWait, ChildrenRequirements<D> childrenRequirements, Consumer<String> logger) {
+        this.title = title;
         this.minutesToWait = minutesToWait;
         this.childrenRequirements = childrenRequirements;
         this.logger = logger;
     }
 
     public D tryUntilGotDesired(Supplier<D> tryToGet) {
-        IntConsumer defaultWaitFunction = time -> waitBeforeNextRetry(time, null);
+        IntConsumer defaultWaitFunction = time -> waitBeforeNextRetry(time, Optional.empty());
         return tryUntilGotDesired(tryToGet, defaultWaitFunction);
     }
 
@@ -49,53 +52,44 @@ public class RetryEngine<D> {
         while (Objects.isNull(desired)) {
             desired = tryToGet.get();
             if (Objects.isNull(desired)) {
-                log("couldn't find the element");
                 waitFunction.accept(minutesToWait);
             } else if (waitForChildren) {
-                childrenCheckingLoop(desired, waitFunction);
+                childrenCheckingLoop(desired);
             }
         }
-        log("found desired element and returning it");
+        log("the try was satisfied and will return the desired element/s");
         return desired;
     }
 
-    private void childrenCheckingLoop(D got, IntConsumer waitFunction) {
+    private void childrenCheckingLoop(D got) {
         boolean waitForChildren=true;
         boolean childrenConstraintSatisfied = childrenRequirements.constraint == null;
         while (waitForChildren) {
             List<D> children = childrenRequirements.retriever.apply(got);
             if (children.size() < childrenRequirements.children) {
-                log("there is no enough child elements yet");
-                waitFunction.accept(minutesToWait);
+                waitBeforeNextRetry(minutesToWait, Optional.of("Not enough children yet"));
             } else {
                 if (!childrenConstraintSatisfied) {
                     childrenConstraintSatisfied = children.stream().allMatch(childrenRequirements.constraint::apply);
                 }
                 else {
                     waitForChildren = false;
-                    int shorterTime = 1;
-                    waitBeforeNextRetry(shorterTime, "waiting a bit more for courtesy: " + shorterTime + "min");
+                    waitSeconds(50);
                 }
             }
         }
     }
 
-    public void waitBeforeNextRetry(int currentMinutesToWait, String forcedMessage) {
-        String msg = StringUtils.isNotEmpty(forcedMessage)
-                ? forcedMessage
-                : "waiting "+currentMinutesToWait+" minutes before the next try - "+ Output.getCurrentTime();
-        log(msg);
-        try {
-            TimeUnit.MINUTES.sleep(currentMinutesToWait);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log("failed TimeUnit.MINUTES.sleep");
-            e.printStackTrace();
-        }
+    public void waitBeforeNextRetry(int currentMinutesToWait, Optional<String> message) {
+        String descriptionMessage = "Desired element/s not found";
+        String waitingMessage = MessageFormat.format(" and will retry after {0} minutes", currentMinutesToWait);
+        if (message.isPresent()) descriptionMessage = message.get();
+        log(descriptionMessage + waitingMessage);
+        waitMinutes(currentMinutesToWait);
     }
 
     private void log (String msg) {
-        logger.accept("<RetryEngine> "+msg);
+        logger.accept(MessageFormat.format("<RetryEngine.{0}> {1}", title, msg));
     }
 
 }

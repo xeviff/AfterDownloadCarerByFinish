@@ -25,7 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -76,10 +75,7 @@ public class SonarrJobHandler implements Runnable {
         try {
             loadInfoFromJobFile();
             log("going to handle the so called: "+fullTitle);
-            synchronized (orchestrator) {
-                orchestrator.jobInitiated(jobTitle);
-            }
-
+            setJobStateInitiated();
             if (StringUtils.isNotEmpty(fileName)) {
                 log("retrieved cached element name from file :D -> "+fileName);
                 elementName = fileName;
@@ -100,18 +96,14 @@ public class SonarrJobHandler implements Runnable {
                         return null;
                     }
                 };
-                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(SONARR_WAIT_INTERVAL, this::logWhenActive);
+                RetryEngine<String> retryEngineForQueue = new RetryEngine<>(
+                        "SonarrQueueRecord",
+                        SONARR_WAIT_INTERVAL,
+                        this::logWhenActive);
                 elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
                 writeElementNameToJobInfo(elementName);
             }
-            synchronized (orchestrator) {
-                orchestrator.jobHasFileName(jobTitle);
-                if (orchestrator.isWorkingWithAJob()) {
-                    holdOn();
-                }
-                sonarrJobFile.markDoing();
-                orchestrator.jobWorking(jobTitle);
-            }
+            setJobStateWorkingButPutToSleepFirstIfOtherIsWorking();
 
             if (EPISODE.equals(type)) {
                 handleEpisode(true);
@@ -125,7 +117,7 @@ public class SonarrJobHandler implements Runnable {
             e.printStackTrace();
         } finally {
             synchronized (orchestrator) {
-                orchestrator.jobFinished(jobTitle);
+                orchestrator.jobFinished(jobTitle, fileName);
                 resumeOtherJobs();
             }
         }
@@ -173,7 +165,11 @@ public class SonarrJobHandler implements Runnable {
     private void handleEpisode(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException {
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromEpisode(elementName);
-        if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(CLOUD_WAIT_INTERVAL/2, this::log));
+        if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(
+                "EpisodeOnGoogle",
+                CLOUD_WAIT_INTERVAL/2,
+                this::log)
+        );
         copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
@@ -184,9 +180,11 @@ public class SonarrJobHandler implements Runnable {
                     googleDriveApiGateway.getChildrenFromParent(file, false);
             Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
             RetryEngine<File> retryer = new RetryEngine<>(
+                    "SeasonOnGoogle",
                     CLOUD_WAIT_INTERVAL,
                     new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint),
-                    this::log);
+                    this::log
+            );
             copyService.setRetryEngine(retryer);
         }
 
@@ -204,27 +202,35 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-    public void holdOn(){
+    private void setJobStateInitiated() {
         synchronized (orchestrator) {
-            log("job received hold on order");
-            try {
-                Instant beforeWait = Instant.now();
-                while (orchestrator.isWorkingWithAJob()) {
-                    log("job going to sleep");
-                    orchestrator.wait();
-                    log("job waking up");
+            orchestrator.jobInitiated(jobTitle);
+        }
+    }
+
+    private void setJobStateWorkingButPutToSleepFirstIfOtherIsWorking() {
+        synchronized (orchestrator) {
+            orchestrator.jobHasFileName(jobTitle);
+            if (orchestrator.isWorkingWithAJob()) {
+                log("this job will go to sleep zzz");
+                try {
+                    Instant beforeWait = Instant.now();
+                    while (orchestrator.isWorkingWithAJob()) {
+                        orchestrator.wait();
+                    }
+                    Instant afterWait = Instant.now();
+                    if (Duration.between(beforeWait, afterWait).toMinutes()<1) {
+                        log("SHOULD NOT HAPPEN! seems that things are going too fast between job sleep and its resume");
+                    }
+                } catch (InterruptedException e) {
+                    log("SHOULD NOT HAPPEN! could not put on waiting the job " + jobTitle);
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
                 }
-                Instant afterWait = Instant.now();
-                if (Duration.between(beforeWait, afterWait).toMinutes()<1) {
-                    log("seems that things are going too fast, sleeping few seconds");
-                    Thread.sleep(30000);
-                }
-            } catch (InterruptedException e) {
-                log("could not put on waiting the job " + jobTitle);
-                Thread.currentThread().interrupt();
-                e.printStackTrace();
+                log("this job is waking up !.!");
             }
-            log("job will resume");
+            sonarrJobFile.markDoing();
+            orchestrator.jobWorking(jobTitle);
         }
     }
 
@@ -244,5 +250,9 @@ public class SonarrJobHandler implements Runnable {
                 || orchestrator.isJobWorking(jobTitle)) {
             log(msg);
         }
+    }
+
+    public String getFullTitle() {
+        return fullTitle;
     }
 }
