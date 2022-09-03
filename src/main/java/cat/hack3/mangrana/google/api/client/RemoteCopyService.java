@@ -3,9 +3,10 @@ package cat.hack3.mangrana.google.api.client;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
-import cat.hack3.mangrana.utils.Output;
+import cat.hack3.mangrana.utils.EasyLogger;
 import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,11 +21,14 @@ import static cat.hack3.mangrana.utils.Output.msg;
 
 public class RemoteCopyService {
 
+    private final EasyLogger logger;
+
     ConfigFileLoader configFileLoader;
     GoogleDriveApiGateway googleDriveApiGateway;
     RetryEngine<File> retryEngine;
 
     public RemoteCopyService(ConfigFileLoader configFileLoader) throws IOException {
+        this.logger = new EasyLogger();
         this.configFileLoader = configFileLoader;
         googleDriveApiGateway = new GoogleDriveApiGateway();
     }
@@ -39,13 +43,13 @@ public class RemoteCopyService {
             File destinationFolder = getOrCreateMovieFolderByPath(destinationFullPath);
             googleDriveApiGateway
                     .copyFile(videoFile.getId(), destinationFolder.getId());
-            log(">> copied successfully!! :D ");
-            log("fileName: "+downloadedFileName);
-            log("fileId: "+videoFile.getId());
-            log("destinationFolderName: "+destinationFullPath);
-            log("destinationFolderId: "+destinationFolder.getId());
+            logger.nLog(">> copied successfully!! :D ");
+            logger.nLog("fileName: "+downloadedFileName);
+            logger.nLog("fileId: "+videoFile.getId());
+            logger.nLog("destinationFolderName: "+destinationFullPath);
+            logger.nLog("destinationFolderId: "+destinationFolder.getId());
         } else {
-            log("Video element not found in google drive :( " + downloadedFileName);
+            logger.nLog("Video element not found in google drive :( " + downloadedFileName);
         }
     }
 
@@ -54,11 +58,11 @@ public class RemoteCopyService {
         try {
             return searchFolderByName(destinationFolderName);
         } catch (NoSuchElementException e) {
-            log("failed finding the folder but we'll try to create it");
+            logger.nLog("failed finding the folder but we'll try to create it");
             try {
                 return createFolderByParentName(PathUtils.getParentFromFullPath(destinationFullPath), destinationFolderName);
             } catch (IOException e2) {
-                log("couldn't create the folder as well, so I surrender");
+                logger.nLog("couldn't create the folder as well, so I surrender");
                 throw e2;
             }
         }
@@ -73,7 +77,7 @@ public class RemoteCopyService {
                 return googleDriveApiGateway.getChildFromParentByName(downloadedFolderName, parentFolder, true);
             } catch (Exception e) {
                 if (showedCount[0] ==0)
-                    log("Could not find yet the folder <{0}>", downloadedFolderName);
+                    logger.nLog("Could not find yet the folder <{0}>", downloadedFolderName);
                 showedCount[0]++;
                 return null;
             }
@@ -98,7 +102,7 @@ public class RemoteCopyService {
                 return googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
             } catch (Exception e) {
                 if (showedCount[0] ==0)
-                    log("Could not find yet the file " + downloadedFileName);
+                    logger.nLog("Could not find yet the file " + downloadedFileName);
                 showedCount[0]++;
                 return null;
             }
@@ -110,16 +114,22 @@ public class RemoteCopyService {
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationSerieFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
-        copySeasonEpisode(downloadedFile, seasonFolder.getId(), destinationDescription);
+        logger.nLog("Going to copy all season's episodes to <{0}> ( GDriveId: {1} )", destinationDescription);
+        copySeasonEpisode(downloadedFile, seasonFolder.getId(), null);
     }
 
     private void copySeasonEpisode(File episodeFile, String destinationSerieFolder, String destinationDescription) {
+        String msgIntro = "Episode file <{0}> has been successfully copied";
         try {
             googleDriveApiGateway.copyFile(episodeFile.getId(), destinationSerieFolder);
-            log("Episode file <{0}> has been successfully copied to <{1}> ( GDrive id: {2} )"
-                    ,episodeFile.getName(), destinationDescription, destinationSerieFolder);
+            if (StringUtils.isNotEmpty(destinationDescription)) {
+                logger.nLog(msgIntro + " to <{1}> ( GDrive id: {2} )",
+                        episodeFile.getName(), destinationDescription, destinationSerieFolder);
+            } else {
+                logger.nLog(msgIntro, episodeFile.getName());
+            }
         } catch (IOException e) {
-            log("SHOULD NOT HAPPEN! The <{0}> file could not been copied to <{1}> ( GDrive id: {2} )"
+            logger.nLog("SHOULD NOT HAPPEN! The <{0}> file could not been copied to <{1}> ( GDrive id: {2} )"
                     ,episodeFile.getName(), destinationDescription, destinationSerieFolder);
             e.printStackTrace();
         }
@@ -157,11 +167,4 @@ public class RemoteCopyService {
         return googleDriveApiGateway.createFolder(destinationFolderName, parentFolder.getId());
     }
 
-    private void log (String msg) {
-        Output.log("CopyService: "+msg);
-    }
-
-    private void log (String msg, Object... params) {
-        Output.log("CopyService: "+msg(msg, params));
-    }
 }

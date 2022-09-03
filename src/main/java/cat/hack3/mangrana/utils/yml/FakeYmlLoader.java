@@ -1,7 +1,7 @@
 package cat.hack3.mangrana.utils.yml;
 
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
-import cat.hack3.mangrana.utils.Output;
+import cat.hack3.mangrana.utils.EasyLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static cat.hack3.mangrana.utils.Output.msg;
 
 /**
  * Only applicable to the following format
@@ -21,6 +20,8 @@ import static cat.hack3.mangrana.utils.Output.msg;
  * key:2 value2
  */
 public class FakeYmlLoader {
+
+    private static final EasyLogger logger = new EasyLogger(FakeYmlLoader.class);
 
     private FakeYmlLoader(){}
 
@@ -39,18 +40,15 @@ public class FakeYmlLoader {
                     .forEach(cons ->
                             enumMap.put(cons, fileLines.get(cons.name().toLowerCase()))
                     );
-            log(msg("Mapped <key: value> from file {0} to {1} EnumMap",
-                    ymlFile.getAbsolutePath(), enumData.getName()));
+            logger.nLog("Mapped <key: value> from file {0} to {1} EnumMap",
+                    ymlFile.getAbsolutePath(), enumData.getName());
             return enumMap;
         } catch (IOException e) {
-            log("");
+            logger.nHLog("Some problem occurred trying to map file {0} to EnumMap {1}",
+                    ymlFile.getAbsolutePath(), enumData.getName());
             e.printStackTrace();
         }
         return null;
-    }
-
-    private static void log(String msg) {
-        Output.log("FakeYmlLoader: "+msg);
     }
 
 }

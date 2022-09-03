@@ -103,7 +103,7 @@ public class SonarrJobHandler implements Runnable {
                 elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
                 writeElementNameToJobInfo(elementName);
             }
-            setJobStateWorkingButPutToSleepFirstIfOtherIsWorking();
+            setJobStateWorkingOrSleep();
 
             if (EPISODE.equals(type)) {
                 handleEpisode(true);
@@ -116,10 +116,7 @@ public class SonarrJobHandler implements Runnable {
             sonarrJobFile.driveBack();
             e.printStackTrace();
         } finally {
-            synchronized (orchestrator) {
-                orchestrator.jobFinished(jobTitle, fileName);
-                resumeOtherJobs();
-            }
+            setJobStateFinished();
         }
     }
 
@@ -208,7 +205,7 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-    private void setJobStateWorkingButPutToSleepFirstIfOtherIsWorking() {
+    private void setJobStateWorkingOrSleep() {
         synchronized (orchestrator) {
             orchestrator.jobHasFileName(jobTitle);
             if (orchestrator.isWorkingWithAJob()) {
@@ -234,12 +231,13 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-    public void resumeOtherJobs(){
-        log("job FINISHED and will order a GLOBAL RESUME");
+    private void setJobStateFinished() {
         synchronized (orchestrator) {
+            orchestrator.jobFinished(jobTitle, fileName);
             orchestrator.notifyAll();
         }
     }
+
 
     private void log(String msg) {
         Output.log("*> "+jobTitle+": "+msg);

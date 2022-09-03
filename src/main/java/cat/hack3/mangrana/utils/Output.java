@@ -6,9 +6,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Output {
-    private Output(){}
-    public static void log (String msg) {
+    protected Output(){}
+
+    private static void log (String msg) {
         System.out.println(msg);
+    }
+    public static void log (String msg, Object... params) {
+        log(msg(msg, params));
     }
 
     public static void logWithDate(String msg) {

@@ -9,6 +9,7 @@ import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.MissingElementException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
+import cat.hack3.mangrana.utils.EasyLogger;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
@@ -21,12 +22,13 @@ import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GR
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.IMMORTAL_PROCESS;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.moveUncompletedJobsToRetry;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.retrieveJobFiles;
-import static cat.hack3.mangrana.utils.Output.logWithDate;
-import static cat.hack3.mangrana.utils.Output.msg;
+import static cat.hack3.mangrana.utils.Output.log;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
 public class SonarGrabbedDownloadsHandler implements Handler {
+
+    private final EasyLogger logger;
 
     ConfigFileLoader configFileLoader;
     SonarrApiGateway sonarrApiGateway;
@@ -42,6 +44,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     String jobCurrentlyInWork;
 
     public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
+        this.logger = new EasyLogger();
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         serieRefresher = new SerieRefresher(configFileLoader);
@@ -61,7 +64,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     private void handleJobsReadyToCopy() {
-        simpleLog(">>> in first place, going to try to copy those elements that are already downloaded <<<");
+        log(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
         List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
@@ -78,11 +81,12 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                     String identifier = jobFile.getAbsolutePath();
                     if (Objects.nonNull(job) && StringUtils.isNotEmpty(job.getFullTitle()))
                         identifier = job.getFullTitle();
-                    simpleLog("not going to work now with " + identifier);
+                    log("not going to work now with " + identifier);
                 }
             }
         }
-        simpleLog(">>> finished --check and copy right away if possible-- round, now will start the normal process <<<");
+        log(">>>> finished --check and copy right away if possible-- round, now will start the normal process <<<<");
+        log("---------------------------------------------------------------------------------------------------");
     }
 
     private void handleRestOfJobs() {
@@ -117,11 +121,11 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 filesIncorporated++;
                 waitSeconds(5);
             } catch (IOException | IncorrectWorkingReferencesException e) {
-                log("not going to work with " + jobFile.getAbsolutePath());
+                logger.nLogD("not going to work with " + jobFile.getAbsolutePath());
             }
         }
-        log(msg("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
-                filesIncorporated, filesIgnored));
+        logger.nLogD("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
+                filesIncorporated, filesIgnored);
         resumeJobsLogPrint();
     }
 
@@ -142,13 +146,13 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     public void jobWorking(String jobTitle) {
-        log("WORKING WITH "+jobTitle);
+        logger.nLog("WORKING WITH "+jobTitle);
         jobsState.put(jobTitle, "working");
         jobCurrentlyInWork=jobTitle;
     }
 
     public void jobFinished(String jobTitle, String fileName) {
-        log("NOT WORKING ANYMORE WITH "+jobTitle);
+        logger.nLog("NOT WORKING ANYMORE WITH "+jobTitle);
         jobsState.put(jobTitle, "finished");
         handlingFiles.remove(fileName);
         jobCurrentlyInWork=null;
@@ -156,24 +160,16 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 
     private void resumeJobsLogPrint() {
         if (reportDelayCounter == 10) {
-            simpleLog("**** RESUME JOBS ****");
+            log("**** RESUME JOBS ****");
             this.jobsState.forEach((jobName, state) ->
-                    simpleLog(msg("Job: {0} | current state: {1}"
-                                    , jobName, state))
+                    log("Job: {0} | current state: {1}"
+                                    , jobName, state)
             );
             reportDelayCounter = 0;
-            simpleLog("**** RESUME JOBS ****");
+            log("**** RESUME JOBS ****");
         } else {
             reportDelayCounter++;
         }
-    }
-
-    private void simpleLog (String msg) {
-        log(msg);
-    }
-
-    private void log (String msg) {
-        logWithDate("ORCHESTRATOR: "+msg);
     }
 
 }

@@ -12,7 +12,6 @@ import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.Job
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.JobLocation.PATH_DOING;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.JobLocation.PATH_TODO;
 import static cat.hack3.mangrana.utils.Output.log;
-import static cat.hack3.mangrana.utils.Output.msg;
 
 public class SonarrJobFileManager {
 
@@ -34,7 +33,7 @@ public class SonarrJobFileManager {
         File[] files = jobsDir.listFiles();
         int newFiles = files==null?0: files.length;
         if (newFiles>0)
-            log(msg("retrieved {0} job files from <to_do> folder", newFiles));
+            log("retrieved {0} job files from <to_do> folder", newFiles);
         return files==null
                 ? Collections.emptyList()
                 : Arrays.stream(files)
