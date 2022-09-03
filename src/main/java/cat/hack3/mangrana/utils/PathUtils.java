@@ -9,9 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.text.MessageFormat;
 
-import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.utils.Output.msg;
 
 public class PathUtils {
 
@@ -35,10 +34,10 @@ public class PathUtils {
                     jobFile.toPath()
                     , Paths.get(jobFile.getAbsolutePath()
                             .replaceFirst(folderOrigin.getFolderName(), folderDestination.getFolderName())));
-            log(MessageFormat.format("moved job file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
+            log(msg("moved job file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
             return newPath.toFile();
         } catch (IOException e) {
-            log(MessageFormat.format("COULD NOT MOVE file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
+            log(msg("COULD NOT MOVE file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
             return jobFile;
         }
     }
@@ -57,4 +56,7 @@ public class PathUtils {
         return res;
     }
 
+    private static void log(String msg){
+        Output.log("PathUtils: "+msg);
+    }
 }

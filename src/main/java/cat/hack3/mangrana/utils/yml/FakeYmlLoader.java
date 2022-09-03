@@ -6,13 +6,14 @@ import cat.hack3.mangrana.utils.Output;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static cat.hack3.mangrana.utils.Output.msg;
 
 /**
  * Only applicable to the following format
@@ -38,7 +39,7 @@ public class FakeYmlLoader {
                     .forEach(cons ->
                             enumMap.put(cons, fileLines.get(cons.name().toLowerCase()))
                     );
-            log(MessageFormat.format("Mapped <key: value> from file {0} to {1} EnumMap",
+            log(msg("Mapped <key: value> from file {0} to {1} EnumMap",
                     ymlFile.getAbsolutePath(), enumData.getName()));
             return enumMap;
         } catch (IOException e) {

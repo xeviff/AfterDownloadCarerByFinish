@@ -1,6 +1,5 @@
 package cat.hack3.mangrana.downloads.workers;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,6 +8,7 @@ import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
+import static cat.hack3.mangrana.utils.Output.msg;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
@@ -82,14 +82,14 @@ public class RetryEngine<D> {
 
     public void waitBeforeNextRetry(int currentMinutesToWait, Optional<String> message) {
         String descriptionMessage = "Desired element/s not found";
-        String waitingMessage = MessageFormat.format(" and will retry after {0} minutes", currentMinutesToWait);
+        String waitingMessage = msg(" and will retry after {0} minutes", currentMinutesToWait);
         if (message.isPresent()) descriptionMessage = message.get();
         log(descriptionMessage + waitingMessage);
         waitMinutes(currentMinutesToWait);
     }
 
     private void log (String msg) {
-        logger.accept(MessageFormat.format("<RetryEngine.{0}> {1}", title, msg));
+        logger.accept(msg("<RetryEngine.{0}> {1}", title, msg));
     }
 
 }

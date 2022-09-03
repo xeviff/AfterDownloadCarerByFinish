@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.FOLDER;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
+import static cat.hack3.mangrana.utils.Output.msg;
 
 public class RemoteCopyService {
 
@@ -64,54 +65,62 @@ public class RemoteCopyService {
     }
 
     public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException {
-        log("willing for copy season <"+downloadedFolderName+"> to <"+destinationFullPath+"/"+seasonFolderName+">");
+        String destinationDescription = msg("<{0}/{1}>",destinationFullPath, seasonFolderName);
+        final int[] showedCount = {0};
         Supplier<File> getDownloadedSeasonFolder = () -> {
             try {
                 File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
                 return googleDriveApiGateway.getChildFromParentByName(downloadedFolderName, parentFolder, true);
             } catch (Exception e) {
-                log("could not find yet the folder: "+downloadedFolderName);
+                if (showedCount[0] ==0)
+                    log("Could not find yet the folder <{0}>", downloadedFolderName);
+                showedCount[0]++;
                 return null;
             }
         };
         File downloadedSeasonFolder = Objects.isNull(retryEngine) ? getDownloadedSeasonFolder.get() : retryEngine.tryUntilGotDesired(getDownloadedSeasonFolder);
         if (Objects.isNull(downloadedSeasonFolder))
-            throw new NoSuchElementException("definitely, could not retrieve the downloaded folder");
+            throw new NoSuchElementException("SHOULD NOT HAPPEN! definitely, could not retrieve the downloaded folder "+ downloadedFolderName);
 
         String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
         List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenFromParent(downloadedSeasonFolder, false);
         seasonEpisodesGFiles.forEach(episodeFile ->
-                copySeasonEpisode(episodeFile, seasonFolder.getId()));
+                copySeasonEpisode(episodeFile, seasonFolder.getId(), destinationDescription));
     }
 
     public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException {
-        log("willing for copy episode <"+downloadedFileName+"> to <"+destinationFullPath+"/"+seasonFolderName+">");
+        String destinationDescription = msg("<{0}/{1}>",destinationFullPath, seasonFolderName);
+        final int[] showedCount = {0};
         Supplier<File> getDownloadedEpisodeFile = () -> {
             try {
                 return googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
             } catch (Exception e) {
-                log("could not find yet the file: " + downloadedFileName);
+                if (showedCount[0] ==0)
+                    log("Could not find yet the file " + downloadedFileName);
+                showedCount[0]++;
                 return null;
             }
         };
         File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile);
         if (Objects.isNull(downloadedFile))
-            throw new NoSuchElementException("definitely, could not retrieve the video file");
+            throw new NoSuchElementException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+downloadedFileName);
 
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationSerieFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
-        copySeasonEpisode(downloadedFile, seasonFolder.getId());
+        copySeasonEpisode(downloadedFile, seasonFolder.getId(), destinationDescription);
     }
 
-    private void copySeasonEpisode(File episodeFile, String destinationSerieFolder) {
-        log("copying "+episodeFile.getName()+" to "+destinationSerieFolder);
+    private void copySeasonEpisode(File episodeFile, String destinationSerieFolder, String destinationDescription) {
         try {
             googleDriveApiGateway.copyFile(episodeFile.getId(), destinationSerieFolder);
+            log("Episode file <{0}> has been successfully copied to <{1}> ( GDrive id: {2} )"
+                    ,episodeFile.getName(), destinationDescription, destinationSerieFolder);
         } catch (IOException e) {
-            log("caution! this file could not been copied!!");
+            log("SHOULD NOT HAPPEN! The <{0}> file could not been copied to <{1}> ( GDrive id: {2} )"
+                    ,episodeFile.getName(), destinationDescription, destinationSerieFolder);
             e.printStackTrace();
         }
     }
@@ -150,5 +159,9 @@ public class RemoteCopyService {
 
     private void log (String msg) {
         Output.log("CopyService: "+msg);
+    }
+
+    private void log (String msg, Object... params) {
+        Output.log("CopyService: "+msg(msg, params));
     }
 }

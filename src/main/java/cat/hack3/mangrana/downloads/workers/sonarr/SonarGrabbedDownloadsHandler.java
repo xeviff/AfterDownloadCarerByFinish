@@ -13,7 +13,6 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,6 +22,7 @@ import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.IM
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.moveUncompletedJobsToRetry;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.retrieveJobFiles;
 import static cat.hack3.mangrana.utils.Output.logWithDate;
+import static cat.hack3.mangrana.utils.Output.msg;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
@@ -120,7 +120,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 log("not going to work with " + jobFile.getAbsolutePath());
             }
         }
-        log(MessageFormat.format("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
+        log(msg("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
                 filesIncorporated, filesIgnored));
         resumeJobsLogPrint();
     }
@@ -158,8 +158,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         if (reportDelayCounter == 10) {
             simpleLog("**** RESUME JOBS ****");
             this.jobsState.forEach((jobName, state) ->
-                    simpleLog(MessageFormat
-                            .format("Job: {0} | current state: {1}"
+                    simpleLog(msg("Job: {0} | current state: {1}"
                                     , jobName, state))
             );
             reportDelayCounter = 0;
