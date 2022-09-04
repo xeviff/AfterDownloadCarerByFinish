@@ -2,6 +2,8 @@ package cat.hack3.mangrana.google.api.client;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.RetryEngine;
+import cat.hack3.mangrana.exception.NoElementFoundException;
+import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import cat.hack3.mangrana.utils.EasyLogger;
 import cat.hack3.mangrana.utils.PathUtils;
@@ -10,7 +12,6 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -28,7 +29,7 @@ public class RemoteCopyService {
     RetryEngine<File> retryEngine;
 
     public RemoteCopyService(ConfigFileLoader configFileLoader) throws IOException {
-        this.logger = new EasyLogger();
+        this.logger = new EasyLogger("CopyService");
         this.configFileLoader = configFileLoader;
         googleDriveApiGateway = new GoogleDriveApiGateway();
     }
@@ -36,7 +37,7 @@ public class RemoteCopyService {
         this.retryEngine = retryEngine;
     }
 
-    public void copyVideoFile(String downloadedFileName, String destinationFullPath) throws IOException {
+    public void copyVideoFile(String downloadedFileName, String destinationFullPath) throws IOException, NoElementFoundException {
         File videoFile = googleDriveApiGateway
                 .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
         if (Objects.nonNull(videoFile)) {
@@ -53,22 +54,22 @@ public class RemoteCopyService {
         }
     }
 
-    private File getOrCreateMovieFolderByPath(String destinationFullPath) throws IOException {
+    private File getOrCreateMovieFolderByPath(String destinationFullPath) throws IOException, NoElementFoundException {
         String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         try {
             return searchFolderByName(destinationFolderName);
-        } catch (NoSuchElementException e) {
+        } catch (NoElementFoundException e) {
             logger.nLog("failed finding the folder but we'll try to create it");
             try {
                 return createFolderByParentName(PathUtils.getParentFromFullPath(destinationFullPath), destinationFolderName);
-            } catch (IOException e2) {
+            } catch (IOException | NoElementFoundException e2) {
                 logger.nLog("couldn't create the folder as well, so I surrender");
                 throw e2;
             }
         }
     }
 
-    public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException {
+    public void copySeasonFromDownloadToItsLocation(String downloadedFolderName, String destinationFullPath, String seasonFolderName) throws IOException, TooMuchTriesException, NoElementFoundException {
         String destinationDescription = msg("<{0}/{1}>",destinationFullPath, seasonFolderName);
         final int[] showedCount = {0};
         Supplier<File> getDownloadedSeasonFolder = () -> {
@@ -84,7 +85,7 @@ public class RemoteCopyService {
         };
         File downloadedSeasonFolder = Objects.isNull(retryEngine) ? getDownloadedSeasonFolder.get() : retryEngine.tryUntilGotDesired(getDownloadedSeasonFolder);
         if (Objects.isNull(downloadedSeasonFolder))
-            throw new NoSuchElementException("SHOULD NOT HAPPEN! definitely, could not retrieve the downloaded folder "+ downloadedFolderName);
+            throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the downloaded folder "+ downloadedFolderName);
 
         String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationFolderName);
@@ -94,7 +95,7 @@ public class RemoteCopyService {
                 copySeasonEpisode(episodeFile, seasonFolder.getId(), destinationDescription));
     }
 
-    public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException {
+    public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException, NoElementFoundException, TooMuchTriesException {
         String destinationDescription = msg("<{0}/{1}>",destinationFullPath, seasonFolderName);
         final int[] showedCount = {0};
         Supplier<File> getDownloadedEpisodeFile = () -> {
@@ -109,7 +110,7 @@ public class RemoteCopyService {
         };
         File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile);
         if (Objects.isNull(downloadedFile))
-            throw new NoSuchElementException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+downloadedFileName);
+            throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+downloadedFileName);
 
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationSerieFolderName);
@@ -135,11 +136,11 @@ public class RemoteCopyService {
         }
     }
 
-    private File getOrCreateSerieFolder(String destinationFullPath, String destinationFolderName) throws IOException {
+    private File getOrCreateSerieFolder(String destinationFullPath, String destinationFolderName) throws IOException, NoElementFoundException {
         File destinationSerieFolder;
         try {
             destinationSerieFolder = googleDriveApiGateway.lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
-        } catch (NoSuchElementException e) {
+        } catch (NoElementFoundException e) {
             String parentDirectory = PathUtils.getParentFromFullPath(destinationFullPath);
             File seriesFolderParent = googleDriveApiGateway.lookupElementByName(parentDirectory, FOLDER, configFileLoader.getConfig(SERIES_TEAM_DRIVE_ID));
             destinationSerieFolder = googleDriveApiGateway.createFolder(destinationFolderName, seriesFolderParent.getId());
@@ -151,18 +152,18 @@ public class RemoteCopyService {
         File seasonFolder;
         try {
             seasonFolder = googleDriveApiGateway.getChildFromParentByName(seasonFolderName, destinationSerieFolder, true);
-        } catch (NoSuchElementException e) {
+        } catch (NoElementFoundException e) {
             seasonFolder = googleDriveApiGateway.createFolder(seasonFolderName, destinationSerieFolder.getId());
         }
         return seasonFolder;
     }
 
-    private File searchFolderByName(String destinationFolderName) throws IOException {
+    private File searchFolderByName(String destinationFolderName) throws IOException, NoElementFoundException {
         return googleDriveApiGateway
                 .lookupElementByName(destinationFolderName, FOLDER, configFileLoader.getConfig(MOVIES_TEAM_DRIVE_ID));
     }
 
-    private File createFolderByParentName(String parentDirectory, String destinationFolderName) throws IOException {
+    private File createFolderByParentName(String parentDirectory, String destinationFolderName) throws IOException, NoElementFoundException {
         File parentFolder = searchFolderByName(parentDirectory);
         return googleDriveApiGateway.createFolder(destinationFolderName, parentFolder.getId());
     }

@@ -4,18 +4,18 @@ import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.sonarr.bean.Season;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.exception.NoElementFoundException;
+import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.plex.url.PlexCommandLauncher;
-import cat.hack3.mangrana.sonarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.sonarr.api.schema.queue.Record;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
-import cat.hack3.mangrana.utils.StringCaptor;
+import cat.hack3.mangrana.sonarr.api.schema.series.SonarrSerie;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static cat.hack3.mangrana.utils.Output.log;
@@ -85,9 +85,11 @@ public class SonarrFailedDownloadsHandler implements Handler {
             );
             serieRefresher.refreshSerieInSonarrAndPlex(serie, season.getQueueItemId());
             log("season handled!");
-        } catch (Exception e) {
+        } catch (IncorrectWorkingReferencesException | IOException | NoElementFoundException e) {
             log("could not handle the season because of "+e.getMessage());
             e.printStackTrace();
+        } catch (TooMuchTriesException e) {
+            log("The season {0} treatment will be skipped for the moment due to so many retries", season.getDownloadedFolderName());
         }
     }
 

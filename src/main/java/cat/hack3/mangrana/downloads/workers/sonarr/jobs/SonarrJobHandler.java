@@ -5,12 +5,14 @@ import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.sonarr.SerieRefresher;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
-import cat.hack3.mangrana.exception.MissingElementException;
+import cat.hack3.mangrana.exception.NoElementFoundException;
+import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
 import cat.hack3.mangrana.sonarr.api.schema.series.SonarrSerie;
+import cat.hack3.mangrana.utils.EasyLogger;
 import cat.hack3.mangrana.utils.Output;
 import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
@@ -23,7 +25,6 @@ import java.io.Writer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -40,6 +41,8 @@ import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpiso
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
 public class SonarrJobHandler implements Runnable {
+
+    private EasyLogger logger;
 
     public enum DownloadType {SEASON, EPISODE}
     ConfigFileLoader configFileLoader;
@@ -72,6 +75,7 @@ public class SonarrJobHandler implements Runnable {
 
     @Override
     public void run() {
+        boolean error=false;
         try {
             loadInfoFromJobFile();
             log("going to handle the so called: "+fullTitle);
@@ -88,10 +92,10 @@ public class SonarrJobHandler implements Runnable {
                                 .stream()
                                 .filter(rcd -> downloadId.equals(rcd.getDownloadId()))
                                 .findFirst()
-                                .orElseThrow(() -> new NoSuchElementException("element not found in queue"))
+                                .orElseThrow(() -> new NoElementFoundException("element not found in queue"))
                                 .getOutputPath();
                         return PathUtils.getCurrentFromFullPath(outputPath);
-                    } catch (NoSuchElementException e) {
+                    } catch (NoElementFoundException e) {
                         logWhenActive("not found "+downloadId+" yet on queue, will retry later");
                         return null;
                     }
@@ -111,16 +115,17 @@ public class SonarrJobHandler implements Runnable {
                 handleSeason(true);
             }
             sonarrJobFile.markDone();
-        } catch (Exception e) {
+        } catch (TooMuchTriesException | IOException | IncorrectWorkingReferencesException | NoElementFoundException e) {
+            error=true;
             log("something wrong: "+e.getMessage());
             sonarrJobFile.driveBack();
             e.printStackTrace();
         } finally {
-            setJobStateFinished();
+            setJobStateFinished(error);
         }
     }
 
-    public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, MissingElementException {
+    public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
         loadInfoFromJobFile();
         if (StringUtils.isEmpty(fileName)) {
             log("this job has not a fileName retrieved, so it cannot be processed. ");
@@ -130,8 +135,8 @@ public class SonarrJobHandler implements Runnable {
             if (EPISODE.equals(type)) {
                 try {
                     googleDriveApiGateway.lookupElementByName(elementName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
-                } catch (NoSuchElementException e) {
-                    throw new NoSuchElementException("episode not downloaded yet");
+                } catch (NoElementFoundException e) {
+                    throw new NoElementFoundException("episode not downloaded yet");
                 }
                 handleEpisode(false);
             } else {
@@ -139,9 +144,9 @@ public class SonarrJobHandler implements Runnable {
                     File parentFolder =  googleDriveApiGateway.lookupElementById(configFileLoader.getConfig(DOWNLOADS_SERIES_FOLDER_ID));
                     File season = googleDriveApiGateway.getChildFromParentByName(elementName, parentFolder, true);
                     List<File> episodes = googleDriveApiGateway.getChildrenFromParent(season, false);
-                    if (episodes.size() < episodeCount) throw new MissingElementException(msg("some episode is missing: expected {0}, got {1}", episodeCount, episodes.size()));
+                    if (episodes.size() < episodeCount) throw new NoElementFoundException(msg("some episode is missing: expected {0}, got {1}", episodeCount, episodes.size()));
                 } catch (Exception e) {
-                    throw new NoSuchElementException("season not downloaded yet");
+                    throw new NoElementFoundException("season not downloaded yet");
                 }
                 handleSeason(false);
             }
@@ -150,8 +155,9 @@ public class SonarrJobHandler implements Runnable {
     }
 
     private void loadInfoFromJobFile() {
-        fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
         jobTitle = fullTitle.substring(0, 38)+"..";
+        logger = new EasyLogger("*> "+jobTitle);
+        fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
         downloadId = sonarrJobFile.getInfo(SONARR_DOWNLOAD_ID);
         episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SONARR_RELEASE_EPISODECOUNT));
         type = episodeCount == 1 ? EPISODE : SEASON;
@@ -159,7 +165,7 @@ public class SonarrJobHandler implements Runnable {
         fileName = sonarrJobFile.getInfo(JAVA_FILENAME);
     }
 
-    private void handleEpisode(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException {
+    private void handleEpisode(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
         if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(
                 "EpisodeOnGoogle",
                 CLOUD_WAIT_INTERVAL/2,
@@ -171,7 +177,7 @@ public class SonarrJobHandler implements Runnable {
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
 
-    private void handleSeason(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException {
+    private void handleSeason(boolean waitUntilExists) throws IOException, IncorrectWorkingReferencesException, TooMuchTriesException, NoElementFoundException {
         if (waitUntilExists) {
             Function<File, List<File>> childrenRetriever = file ->
                     googleDriveApiGateway.getChildrenFromParent(file, false);
@@ -231,9 +237,13 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-    private void setJobStateFinished() {
+    private void setJobStateFinished(boolean error) {
         synchronized (orchestrator) {
-            orchestrator.jobFinished(jobTitle, fileName);
+            if (error) {
+                orchestrator.jobError(jobTitle, fileName);
+            } else {
+                orchestrator.jobFinished(jobTitle, fileName);
+            }
             orchestrator.notifyAll();
         }
     }

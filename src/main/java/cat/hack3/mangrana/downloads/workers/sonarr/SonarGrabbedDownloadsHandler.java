@@ -6,7 +6,8 @@ import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
-import cat.hack3.mangrana.exception.MissingElementException;
+import cat.hack3.mangrana.exception.NoElementFoundException;
+import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.utils.EasyLogger;
@@ -77,7 +78,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                     job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
                     job.tryToMoveIfPossible();
                 } catch (IOException | IncorrectWorkingReferencesException | NoSuchElementException |
-                         MissingElementException e) {
+                         NoElementFoundException | TooMuchTriesException e) {
                     String identifier = jobFile.getAbsolutePath();
                     if (Objects.nonNull(job) && StringUtils.isNotEmpty(job.getFullTitle()))
                         identifier = job.getFullTitle();
@@ -95,14 +96,15 @@ public class SonarGrabbedDownloadsHandler implements Handler {
             List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
             if (!jobFiles.isEmpty()) {
                 ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
-                handleJobs(jobFiles, executor);
+                handleJobsInParallel(jobFiles, executor);
             }
+            resumeJobsLogPrint();
             waitMinutes(5);
             keepLooping = Boolean.parseBoolean(configFileLoader.getConfig(IMMORTAL_PROCESS));
         }
     }
 
-    private void handleJobs(List<File> jobFiles, ExecutorService executor) {
+    private void handleJobsInParallel(List<File> jobFiles, ExecutorService executor) {
         long filesIncorporated = 0;
         long filesIgnored = 0;
         for (File jobFile : jobFiles) {
@@ -124,9 +126,9 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 logger.nLogD("not going to work with " + jobFile.getAbsolutePath());
             }
         }
-        logger.nLogD("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
-                filesIncorporated, filesIgnored);
-        resumeJobsLogPrint();
+        if (filesIncorporated>0)
+            logger.nLogD("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
+                    filesIncorporated, filesIgnored);
     }
 
     public boolean isWorkingWithAJob() {
@@ -154,6 +156,13 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public void jobFinished(String jobTitle, String fileName) {
         logger.nLog("NOT WORKING ANYMORE WITH "+jobTitle);
         jobsState.put(jobTitle, "finished");
+        handlingFiles.remove(fileName);
+        jobCurrentlyInWork=null;
+    }
+
+    public void jobError(String jobTitle, String fileName) {
+        logger.nLog("NOT WORKING ANYMORE WITH "+jobTitle);
+        jobsState.put(jobTitle, "error");
         handlingFiles.remove(fileName);
         jobCurrentlyInWork=null;
     }

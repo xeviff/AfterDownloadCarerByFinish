@@ -1,5 +1,6 @@
 package cat.hack3.mangrana.google.api.client.gateway;
 
+import cat.hack3.mangrana.exception.NoElementFoundException;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -28,7 +29,7 @@ public class GoogleDriveApiGateway {
                 .execute();
     }
 
-    public File lookupElementByName(String elementName, GoogleElementType type, String relatedTeamDriveId) throws IOException {
+    public File lookupElementByName(String elementName, GoogleElementType type, String relatedTeamDriveId) throws IOException, NoElementFoundException {
         String query = "name = '" + elementName.replace("'","\\'") + "'"
                 + " and trashed=false"
                 + getTypeFilterQuery(type);
@@ -45,7 +46,7 @@ public class GoogleDriveApiGateway {
 
         List<File> files = Optional.ofNullable(
                         fileList.getFiles())
-                .orElseThrow(() -> new NoSuchElementException("element not found by name: " + elementName));
+                .orElseThrow(() -> new NoElementFoundException("element not found by name: " + elementName));
 
         if (CollectionUtils.isNotEmpty(files)) {
             if (files.size() > 1) {
@@ -54,7 +55,7 @@ public class GoogleDriveApiGateway {
             }
             return files.get(0);
         } else {
-            throw new NoSuchElementException("no elements in the list xO");
+            throw new NoElementFoundException("no elements in the list xO");
         }
     }
 
@@ -67,13 +68,13 @@ public class GoogleDriveApiGateway {
         return getChildrenCommonCall(query);
     }
 
-    public File getChildFromParentByName(String name, File parent, boolean onlyFolder)  {
+    public File getChildFromParentByName(String name, File parent, boolean onlyFolder) throws NoElementFoundException {
         String query = "name = '" + name.replace("'","\\'") + "'" +
                 " and trashed=false and "+
                         (onlyFolder ? "mimeType = 'application/vnd.google-apps.folder' and " : "")+
                         "'"+parent.getId()+"' in parents";
         List<File> children = getChildrenCommonCall(query);
-        if (children.isEmpty()) throw new NoSuchElementException("no elements in the list xO");
+        if (children.isEmpty()) throw new NoElementFoundException("no elements in the list xO");
         if (children.size() > 1) log("WARNING: more than one element here not expected");
         return children.get(0);
     }
