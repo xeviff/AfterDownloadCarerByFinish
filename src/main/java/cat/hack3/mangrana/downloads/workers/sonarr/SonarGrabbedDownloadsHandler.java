@@ -40,6 +40,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 5;
 
     Map<String, String> jobsState = new HashMap<>();
+    Map<String, String> jobsStatePrintedLastTime = new HashMap<>();
     int reportDelayCounter = 0;
     Set<String> handlingFiles = new HashSet<>();
     String jobCurrentlyInWork;
@@ -167,8 +168,9 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         jobCurrentlyInWork=null;
     }
 
+    @SuppressWarnings("unchecked")
     private void resumeJobsLogPrint() {
-        if (reportDelayCounter == 10) {
+        if (reportDelayCounter == 10 && !sameResumeAlreadyPrinted()) {
             log("**** RESUME JOBS ****");
             this.jobsState.forEach((jobName, state) ->
                     log("Job: {0} | current state: {1}"
@@ -176,9 +178,19 @@ public class SonarGrabbedDownloadsHandler implements Handler {
             );
             reportDelayCounter = 0;
             log("**** RESUME JOBS ****");
+            jobsStatePrintedLastTime = (Map<String, String>) ((HashMap<String, String>)jobsState).clone();
         } else {
             reportDelayCounter++;
         }
+    }
+
+    private boolean sameResumeAlreadyPrinted() {
+        if (jobsStatePrintedLastTime.size() == jobsState.size()) return false;
+        for (Map.Entry<String, String> entry : jobsState.entrySet()) {
+            if (!jobsStatePrintedLastTime.containsKey(entry.getKey())) return false;
+            if (!jobsStatePrintedLastTime.get(entry.getKey()).equals(entry.getValue())) return false;
+        }
+        return true;
     }
 
 }
