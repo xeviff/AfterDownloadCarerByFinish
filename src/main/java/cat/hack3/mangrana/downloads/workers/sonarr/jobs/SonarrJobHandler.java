@@ -13,7 +13,6 @@ import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
 import cat.hack3.mangrana.sonarr.api.schema.series.SonarrSerie;
 import cat.hack3.mangrana.utils.EasyLogger;
-import cat.hack3.mangrana.utils.Output;
 import cat.hack3.mangrana.utils.PathUtils;
 import com.google.api.services.drive.model.File;
 import org.apache.commons.lang.StringUtils;
@@ -155,9 +154,9 @@ public class SonarrJobHandler implements Runnable {
     }
 
     private void loadInfoFromJobFile() {
+        fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
         jobTitle = fullTitle.substring(0, 38)+"..";
         logger = new EasyLogger("*> "+jobTitle);
-        fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
         downloadId = sonarrJobFile.getInfo(SONARR_DOWNLOAD_ID);
         episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SONARR_RELEASE_EPISODECOUNT));
         type = episodeCount == 1 ? EPISODE : SEASON;

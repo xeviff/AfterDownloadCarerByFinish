@@ -36,8 +36,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
-    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 15;
-    public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 1 : 5;
+    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 15;
+    public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 5;
 
     Map<String, String> jobsState = new HashMap<>();
     int reportDelayCounter = 0;
@@ -45,7 +45,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     String jobCurrentlyInWork;
 
     public SonarGrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
-        this.logger = new EasyLogger();
+        this.logger = new EasyLogger("ORCHESTRATOR");
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         serieRefresher = new SerieRefresher(configFileLoader);

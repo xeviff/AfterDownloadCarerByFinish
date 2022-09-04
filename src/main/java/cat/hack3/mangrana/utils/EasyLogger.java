@@ -20,7 +20,7 @@ public class EasyLogger extends Output {
     }
 
     public void nLogD(String msg, Object... params){
-        nLog("{0}: {1} - "+getCurrentTime(), identifier, msg(msg, params));
+        log(msg("{0}: {1} - {2}", identifier, msg(msg, params), getCurrentTime()));
     }
 
     public void nHLog(String msg, Object... params){

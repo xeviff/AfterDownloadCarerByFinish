@@ -50,8 +50,8 @@ public class RetryEngine<D> {
             desired = tryToGet.get();
             if (Objects.isNull(desired)) {
                 waitLoopBehaviour(loopCount,
-                        "Too much tries when retrieving desired element",
-                        msg("The element was not found yet and will retry every {0} minutes", minutesToWait)
+                        msg("The element was not found yet and will retry every {0} minutes", minutesToWait),
+                        "Too much tries when retrieving desired element"
                 );
             } else if (waitForChildren) {
                 childrenCheckingLoop(desired);
@@ -69,9 +69,9 @@ public class RetryEngine<D> {
             List<D> children = childrenRequirements.retriever.apply(got);
             if (children.size() < childrenRequirements.children) {
                 waitLoopBehaviour(loopCount,
+                        msg("Not enough children yet and will retry every {0} minutes", minutesToWait),
                         msg("Too much tries when retrieving children from {0} while current is {1} and expected {2}",
-                                got.toString(), children.size(), childrenRequirements.children),
-                        msg("Not enough children yet and will retry every {0} minutes", minutesToWait)
+                                got.toString(), children.size(), childrenRequirements.children)
                 );
             } else {
                 if (!childrenConstraintSatisfied) {
@@ -85,9 +85,10 @@ public class RetryEngine<D> {
         }
     }
 
-    private void waitLoopBehaviour(AtomicInteger loopCount, String noticeMessage, String errorMessage) throws TooMuchTriesException {
-        if (loopCount.get() == 10)
-            throw new TooMuchTriesException(errorMessage);
+    private void waitLoopBehaviour(AtomicInteger loopCount, String noticeMessage, String overTriesMessage) throws TooMuchTriesException {
+        if (loopCount.get() == 10) {
+            throw new TooMuchTriesException(overTriesMessage);
+        }
         if (loopCount.get()==1) log(noticeMessage);
         loopCount.incrementAndGet();
         waitMinutes(minutesToWait);
