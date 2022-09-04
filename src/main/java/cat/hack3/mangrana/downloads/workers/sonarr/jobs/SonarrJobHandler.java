@@ -172,7 +172,7 @@ public class SonarrJobHandler implements Runnable {
         );
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
         String seasonFolderName = getSeasonFolderNameFromEpisode(elementName);
-        copyService.copyEpisodeFromDownloadToItsLocation(fileName, serie.getPath(), seasonFolderName);
+        copyService.copyEpisodeFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }
 
