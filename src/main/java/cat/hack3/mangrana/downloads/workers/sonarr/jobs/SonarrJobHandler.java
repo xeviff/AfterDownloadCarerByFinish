@@ -78,10 +78,10 @@ public class SonarrJobHandler implements Runnable {
         boolean error=false;
         try {
             loadInfoFromJobFile();
-            log("going to handle the so called: "+fullTitle);
+            log("going to handle the so called {0}", fullTitle);
             setJobStateInitiated();
             if (StringUtils.isNotEmpty(fileName)) {
-                log("retrieved cached element name from file :D -> "+fileName);
+                log("retrieved cached element name from file {0}", fileName);
                 elementName = fileName;
             } else {
                 Supplier<String> getOutputFromQueue = () -> {
@@ -128,7 +128,7 @@ public class SonarrJobHandler implements Runnable {
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
         loadInfoFromJobFile();
         if (StringUtils.isEmpty(fileName)) {
-            log("this job has not a fileName retrieved, so it cannot be processed. ");
+            log("this job has not a fileName retrieved, so it cannot be processed.");
         } else {
             elementName = fileName;
             log("going to try handle the following element: "+elementName);
@@ -223,10 +223,10 @@ public class SonarrJobHandler implements Runnable {
                     }
                     Instant afterWait = Instant.now();
                     if (Duration.between(beforeWait, afterWait).toMinutes()<1) {
-                        log("SHOULD NOT HAPPEN! seems that things are going too fast between job sleep and its resume");
+                        logger.nHLog("seems that things are going too fast between job sleep and its resume");
                     }
                 } catch (InterruptedException e) {
-                    log("SHOULD NOT HAPPEN! could not put on waiting the job " + jobTitle);
+                    logger.nHLog("could not put on waiting the job {0}", jobTitle);
                     Thread.currentThread().interrupt();
                     e.printStackTrace();
                 }
@@ -248,15 +248,14 @@ public class SonarrJobHandler implements Runnable {
         }
     }
 
-
-    private void log(String msg) {
-        Output.log("*> "+jobTitle+": "+msg);
+    private void log(String msg, Object... params) {
+        logger.nLog(msg, params);
     }
 
-    private void logWhenActive(String msg){
+    private void logWhenActive(String msg, Object... params){
         if (!orchestrator.isWorkingWithAJob()
                 || orchestrator.isJobWorking(jobTitle)) {
-            log(msg);
+            logger.nLog(msg, params);
         }
     }
 
