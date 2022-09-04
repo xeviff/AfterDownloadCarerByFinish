@@ -36,7 +36,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
-    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 15;
+    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 10;
     public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 5;
 
     Map<String, String> jobsState = new HashMap<>();
