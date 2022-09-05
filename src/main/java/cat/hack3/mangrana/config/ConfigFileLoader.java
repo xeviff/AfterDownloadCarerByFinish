@@ -26,16 +26,27 @@ public class ConfigFileLoader {
         PLEX_TOKEN,
         PLEX_HOST,
         PLEX_SECTION_REFRESH_URI,
-        PLEX_SERIES_SECTION_ID
+        PLEX_SERIES_SECTION_ID,
+        GOOGLE_RETRY_INTERVAL,
+        SONARR_RETRY_INTERVAL
     }
 
-    private final EnumMap<ProjectConfiguration, String> configurationsMap;
+    private EnumMap<ProjectConfiguration, String> configurationsMap;
 
     public ConfigFileLoader() throws IncorrectWorkingReferencesException {
+        loadFromFile();
+    }
+    public ConfigFileLoader refresh() throws IncorrectWorkingReferencesException {
+        return loadFromFile();
+    }
+
+    private ConfigFileLoader loadFromFile() throws IncorrectWorkingReferencesException {
         File configFile = new File(System.getProperty("user.dir")
                 + CONFIG_FOLDER.concat("/").concat(CONFIG_FILE));
 
         configurationsMap = FakeYmlLoader.getEnumMapFromFile(configFile, ProjectConfiguration.class);
+
+        return this;
     }
 
     public String getConfig(ProjectConfiguration key) {

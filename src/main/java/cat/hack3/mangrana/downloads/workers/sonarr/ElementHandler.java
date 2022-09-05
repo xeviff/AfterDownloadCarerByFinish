@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
@@ -11,9 +12,13 @@ import cat.hack3.mangrana.utils.EasyLogger;
 
 import java.io.IOException;
 
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GOOGLE_RETRY_INTERVAL;
+
 public abstract class ElementHandler {
 
     protected boolean initiated=false;
+
+    protected final int googleWaitInterval;
 
     protected final EasyLogger logger;
     protected final ConfigFileLoader configFileLoader;
@@ -32,6 +37,12 @@ public abstract class ElementHandler {
         this.googleDriveApiGateway = new GoogleDriveApiGateway();
         this.serieRefresher = new SerieRefresher(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
+        if (LocalEnvironmentManager.isLocal()) {
+            googleWaitInterval = 2;
+        } else {
+            googleWaitInterval = Integer.parseInt(configFileLoader.getConfig(GOOGLE_RETRY_INTERVAL));
+        }
+
     }
     public ElementHandler initValues (String elementName, int serieId){
         this.elementName = elementName;

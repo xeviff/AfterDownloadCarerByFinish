@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.function.Function;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_SERIES_FOLDER_ID;
-import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.CLOUD_WAIT_INTERVAL;
 import static cat.hack3.mangrana.utils.Output.msg;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
@@ -44,7 +43,7 @@ public class SeasonHandler extends ElementHandler {
             Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
             RetryEngine<File> retryer = new RetryEngine<>(
                     "SeasonOnGoogle",
-                    CLOUD_WAIT_INTERVAL,
+                    googleWaitInterval,
                     new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint),
                     this::log
             );

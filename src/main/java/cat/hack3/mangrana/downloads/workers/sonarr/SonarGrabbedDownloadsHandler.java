@@ -36,9 +36,6 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
-    public static final int CLOUD_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 10;
-    public static final int SONARR_WAIT_INTERVAL = LocalEnvironmentManager.isLocal() ? 2 : 5;
-
     Map<String, String> jobsState = new HashMap<>();
     Map<String, String> jobsStatePrintedLastTime = new HashMap<>();
     int reportDelayCounter = 0;
@@ -127,9 +124,15 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 logger.nLogD("not going to work with " + jobFile.getAbsolutePath());
             }
         }
-        if (filesIncorporated>0)
+        if (filesIncorporated > 0) {
             logger.nLogD("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
                     filesIncorporated, filesIgnored);
+            try {
+                configFileLoader.refresh();
+            } catch (IncorrectWorkingReferencesException e) {
+                logger.nHLog("couldn't refresh the values from the project config file");
+            }
+        }
     }
 
     public boolean isWorkingWithAJob() {

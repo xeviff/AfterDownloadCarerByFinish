@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.sonarr.EpisodeHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SeasonHandler;
@@ -25,7 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Supplier;
 
-import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.SONARR_WAIT_INTERVAL;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_RETRY_INTERVAL;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.GrabInfo.*;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.EPISODE;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.SEASON;
@@ -35,6 +36,7 @@ public class SonarrJobHandler implements Runnable {
     private EasyLogger logger;
 
     public enum DownloadType {SEASON, EPISODE}
+    final int sonarrWaitInterval;
     ConfigFileLoader configFileLoader;
     SonarrApiGateway sonarrApiGateway;
     GoogleDriveApiGateway googleDriveApiGateway;
@@ -61,6 +63,11 @@ public class SonarrJobHandler implements Runnable {
         serieRefresher = new SerieRefresher(configFileLoader);
         this.sonarrJobFile = sonarrJobFile;
         orchestrator = caller;
+        if (LocalEnvironmentManager.isLocal()){
+            sonarrWaitInterval = 2;
+        } else {
+            sonarrWaitInterval = Integer.parseInt(configFileLoader.getConfig(SONARR_RETRY_INTERVAL));
+        }
     }
 
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
@@ -141,7 +148,7 @@ public class SonarrJobHandler implements Runnable {
         };
         RetryEngine<String> retryEngineForQueue = new RetryEngine<>(
                 "SonarrQueueRecord",
-                SONARR_WAIT_INTERVAL,
+                sonarrWaitInterval,
                 this::logWhenActive);
         elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
     }

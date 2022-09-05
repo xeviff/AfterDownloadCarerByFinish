@@ -12,7 +12,6 @@ import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 import java.io.IOException;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_TEAM_DRIVE_ID;
-import static cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler.CLOUD_WAIT_INTERVAL;
 import static cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
 
@@ -30,7 +29,7 @@ public class EpisodeHandler extends ElementHandler {
         if (!initiated) throw new CircuitBreakingException("initValues method execution is needed first");
         if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(
                 "EpisodeOnGoogle",
-                CLOUD_WAIT_INTERVAL/2,
+                googleWaitInterval /2,
                 this::log)
         );
         SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);

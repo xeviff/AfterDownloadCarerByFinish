@@ -12,3 +12,5 @@ plex_token: q1Ej435345E2zJj
 plex_url: https://your-plex.domain.is
 plex_section_refresh_uri: /library/sections/{section_id}/refresh
 plex_series_section_id: 40
+google_retry_interval: 30
+sonarr_retry_interval: 5
