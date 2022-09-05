@@ -115,7 +115,7 @@ public class RemoteCopyService {
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationSerieFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
-        logger.nLog("Going to copy all season's episodes to <{0}> ( GDriveId: {1} )", destinationDescription);
+        logger.nLog("Going to copy all season's episodes to <{0}> ( GDriveId: {1} )", destinationDescription, seasonFolder.getId());
         copySeasonEpisode(downloadedFile, seasonFolder.getId(), null);
     }
 

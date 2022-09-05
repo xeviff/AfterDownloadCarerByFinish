@@ -169,8 +169,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     }
 
     @SuppressWarnings("unchecked")
-    private void resumeJobsLogPrint() {
-        if (reportDelayCounter == 10 && !sameResumeAlreadyPrinted()) {
+    public void resumeJobsLogPrint() {
+        if (reportDelayCounter > 10 && !sameResumeAlreadyPrinted()) {
             log("**** RESUME JOBS ****");
             this.jobsState.forEach((jobName, state) ->
                     log("Job: {0} | current state: {1}"
@@ -184,8 +184,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         }
     }
 
-    private boolean sameResumeAlreadyPrinted() {
-        if (jobsStatePrintedLastTime.size() == jobsState.size()) return false;
+    public boolean sameResumeAlreadyPrinted() {
+        if (jobsStatePrintedLastTime.size() != jobsState.size()) return false;
         for (Map.Entry<String, String> entry : jobsState.entrySet()) {
             if (!jobsStatePrintedLastTime.containsKey(entry.getKey())) return false;
             if (!jobsStatePrintedLastTime.get(entry.getKey()).equals(entry.getValue())) return false;
