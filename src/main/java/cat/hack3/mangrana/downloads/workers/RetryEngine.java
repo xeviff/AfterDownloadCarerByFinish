@@ -19,6 +19,7 @@ public class RetryEngine<D> {
     private final int minutesToWait;
     private final ChildrenRequirements<D> childrenRequirements;
     private final Consumer<String> logger;
+    private static final int TOO_MUCH_RETRIES_THRESHOLD = 40;
 
     public static class ChildrenRequirements<D> {
         final int children;
@@ -86,7 +87,7 @@ public class RetryEngine<D> {
     }
 
     private void waitLoopBehaviour(AtomicInteger loopCount, String noticeMessage, String overTriesMessage) throws TooMuchTriesException {
-        if (loopCount.get() == 10) {
+        if (loopCount.get() > TOO_MUCH_RETRIES_THRESHOLD) {
             throw new TooMuchTriesException(overTriesMessage);
         }
         if (loopCount.get()==1) log(noticeMessage);
