@@ -34,7 +34,7 @@ public class PathUtils {
                     jobFile.toPath()
                     , Paths.get(jobFile.getAbsolutePath()
                             .replaceFirst(folderOrigin.getFolderName(), folderDestination.getFolderName())));
-            log(msg("moved job file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
+            log(msg("moved job file <{2}> from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));
             return newPath.toFile();
         } catch (IOException e) {
             log(msg("COULD NOT MOVE file {2} from -{0}- to -{1}-", folderOrigin, folderDestination, jobFile.getAbsolutePath()));

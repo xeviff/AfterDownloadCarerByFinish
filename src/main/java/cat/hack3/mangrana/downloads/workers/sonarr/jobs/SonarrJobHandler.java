@@ -88,7 +88,7 @@ public class SonarrJobHandler implements Runnable {
 
     private void loadInfoFromJobFile() {
         fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
-        jobTitle = fullTitle.substring(0, 38)+"..";
+        jobTitle = fullTitle.substring(0, 45)+"..";
         logger = new EasyLogger("*> "+jobTitle);
         downloadId = sonarrJobFile.getInfo(SONARR_DOWNLOAD_ID);
         episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SONARR_RELEASE_EPISODECOUNT));
@@ -102,10 +102,10 @@ public class SonarrJobHandler implements Runnable {
         boolean error=false;
         try {
             loadInfoFromJobFile();
-            logger.nLog("going to handle the so called {0}", fullTitle);
+            logger.nLog("going to handle the so called <{0}>", fullTitle);
             setJobStateInitiated();
             if (StringUtils.isNotEmpty(fileName)) {
-                logger.nLog("retrieved cached element name from file {0}", fileName);
+                logger.nLog("Retrieved successfully from file the cached element name: <{0}> :D", fileName);
                 elementName = fileName;
             } else {
                 retrieveFileNameFromSonarr();

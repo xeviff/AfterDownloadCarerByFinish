@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static cat.hack3.mangrana.utils.Output.getCurrentTime;
 import static cat.hack3.mangrana.utils.Output.msg;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
@@ -51,7 +52,7 @@ public class RetryEngine<D> {
             desired = tryToGet.get();
             if (Objects.isNull(desired)) {
                 waitLoopBehaviour(loopCount,
-                        msg("The element was not found yet and will retry every {0} minutes", minutesToWait),
+                        msg("The element was not found yet and will retry every {0} minutes - {1}", minutesToWait, getCurrentTime()),
                         "Too much tries when retrieving desired element"
                 );
             } else if (waitForChildren) {
@@ -96,7 +97,7 @@ public class RetryEngine<D> {
     }
 
     private void log (String msg) {
-        logger.accept(msg("<RetryEngine.{0}> {1}", title, msg));
+        logger.accept(msg("-|*|RetryEngine.{0}|*|- {1}", title, msg));
     }
 
 }

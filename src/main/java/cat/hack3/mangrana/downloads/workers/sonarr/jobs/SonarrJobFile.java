@@ -39,7 +39,7 @@ public class SonarrJobFile {
 
     public SonarrJobFile(File jobFile) throws IncorrectWorkingReferencesException {
         this.jobFile = jobFile;
-        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class);
+        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, false);
     }
 
     public String getInfo(GrabInfo key) {
