@@ -90,7 +90,7 @@ public class RemoteCopyService {
         String destinationFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
-        logger.nLog("Going to copy all season's episodes to <{0}> ( GDriveId: {1} )", destinationDescription, seasonFolder.getId());
+        logger.nLog("Going to copy all season''s episodes to <{0}> ( GDriveId: {1} )", destinationDescription, seasonFolder.getId());
         List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenFromParent(downloadedSeasonFolder, false);
         seasonEpisodesGFiles.forEach(episodeFile ->
                 copySeasonEpisode(episodeFile, seasonFolder.getId(), destinationDescription));
