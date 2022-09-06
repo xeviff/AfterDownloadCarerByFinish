@@ -26,7 +26,7 @@ public class FakeYmlLoader {
     private FakeYmlLoader(){}
 
     @SuppressWarnings("all")
-    public static <E extends Enum<E>> EnumMap<E, String> getEnumMapFromFile(File ymlFile, Class<E> enumData) throws IncorrectWorkingReferencesException {
+    public static <E extends Enum<E>> EnumMap<E, String> getEnumMapFromFile(File ymlFile, Class<E> enumData, boolean silently) throws IncorrectWorkingReferencesException {
         EnumMap<E, String> enumMap = new EnumMap<>(enumData);
         Pattern simpleYmlKeyValuePattern = Pattern.compile(".+: .+");
         try (Stream<String> stream = Files.lines(ymlFile.toPath())) {
@@ -40,8 +40,10 @@ public class FakeYmlLoader {
                     .forEach(cons ->
                             enumMap.put(cons, fileLines.get(cons.name().toLowerCase()))
                     );
-            logger.nLog("Mapped <key: value> from file {0} to {1} EnumMap",
-                    ymlFile.getAbsolutePath(), enumData.getName());
+            if (!silently) {
+                logger.nLog("Mapped <key: value> from file {0} to -{1}- EnumMap",
+                        ymlFile.getAbsolutePath(), enumData.getSimpleName());
+            }
             return enumMap;
         } catch (IOException e) {
             logger.nHLog("Some problem occurred trying to map file {0} to EnumMap {1}",

@@ -24,6 +24,7 @@ import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.IM
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.moveUncompletedJobsToRetry;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.retrieveJobFiles;
 import static cat.hack3.mangrana.utils.Output.log;
+import static cat.hack3.mangrana.utils.Output.logWithDate;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
@@ -176,11 +177,11 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         if (reportDelayCounter > 10 && !sameResumeAlreadyPrinted()) {
             log("**** RESUME JOBS ****");
             this.jobsState.forEach((jobName, state) ->
-                    log("Job: {0} | current state: {1}"
+                    log("* Job: {0} | current state: {1}"
                                     , jobName, state)
             );
             reportDelayCounter = 0;
-            log("**** RESUME JOBS ****");
+            logWithDate("**** RESUME JOBS ****");
             jobsStatePrintedLastTime = (Map<String, String>) ((HashMap<String, String>)jobsState).clone();
         } else {
             reportDelayCounter++;

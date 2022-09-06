@@ -34,17 +34,23 @@ public class ConfigFileLoader {
     private EnumMap<ProjectConfiguration, String> configurationsMap;
 
     public ConfigFileLoader() throws IncorrectWorkingReferencesException {
-        loadFromFile();
+        loadFromFile(false);
+    }
+    private ConfigFileLoader(boolean silently) throws IncorrectWorkingReferencesException {
+        loadFromFile(silently);
     }
     public ConfigFileLoader refresh() throws IncorrectWorkingReferencesException {
-        return loadFromFile();
+        return loadFromFile(true);
+    }
+    public static ConfigFileLoader getFreshConfig() throws IncorrectWorkingReferencesException {
+        return new ConfigFileLoader(true);
     }
 
-    private ConfigFileLoader loadFromFile() throws IncorrectWorkingReferencesException {
+    private ConfigFileLoader loadFromFile(boolean silently) throws IncorrectWorkingReferencesException {
         File configFile = new File(System.getProperty("user.dir")
                 + CONFIG_FOLDER.concat("/").concat(CONFIG_FILE));
 
-        configurationsMap = FakeYmlLoader.getEnumMapFromFile(configFile, ProjectConfiguration.class);
+        configurationsMap = FakeYmlLoader.getEnumMapFromFile(configFile, ProjectConfiguration.class, silently);
 
         return this;
     }
