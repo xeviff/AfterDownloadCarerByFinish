@@ -25,10 +25,12 @@ public class ConfigFileLoader {
         SERIES_TEAM_DRIVE_ID,
         PLEX_TOKEN,
         PLEX_HOST,
+        PLEX_SECTIONS_LIST_URI,
         PLEX_SECTION_REFRESH_URI,
-        PLEX_SERIES_SECTION_ID,
         GOOGLE_RETRY_INTERVAL,
-        SONARR_RETRY_INTERVAL
+        SONARR_RETRY_INTERVAL,
+        SONARR_PATHS_STARTER,
+        PLEX_PATHS_STARTER
     }
 
     private EnumMap<ProjectConfiguration, String> configurationsMap;

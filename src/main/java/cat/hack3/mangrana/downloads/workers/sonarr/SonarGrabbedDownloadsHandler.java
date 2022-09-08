@@ -1,7 +1,6 @@
 package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.Handler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
@@ -175,13 +174,13 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     @SuppressWarnings("unchecked")
     public void resumeJobsLogPrint() {
         if (reportDelayCounter > 10 && !sameResumeAlreadyPrinted()) {
-            log("**** RESUME JOBS ****");
+            log("**** JOBS RESUME ****");
             this.jobsState.forEach((jobName, state) ->
                     log("* Job: {0} | current state: {1}"
                                     , jobName, state)
             );
             reportDelayCounter = 0;
-            logWithDate("**** RESUME JOBS ****");
+            logWithDate("**** JOBS RESUME ****");
             jobsStatePrintedLastTime = (Map<String, String>) ((HashMap<String, String>)jobsState).clone();
         } else {
             reportDelayCounter++;

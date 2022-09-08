@@ -93,7 +93,7 @@ public class RemoteCopyService {
         logger.nLog("Going to copy all season''s episodes to <{0}> ( GDriveId: {1} )", destinationDescription, seasonFolder.getId());
         List<File> seasonEpisodesGFiles = googleDriveApiGateway.getChildrenFromParent(downloadedSeasonFolder, false);
         seasonEpisodesGFiles.forEach(episodeFile ->
-                copySeasonEpisode(episodeFile, seasonFolder.getId(), destinationDescription));
+                copySeasonEpisode(episodeFile, seasonFolder.getId(), null));
     }
 
     public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException, NoElementFoundException, TooMuchTriesException {

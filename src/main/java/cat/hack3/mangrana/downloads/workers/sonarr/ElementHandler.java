@@ -38,7 +38,7 @@ public abstract class ElementHandler {
         this.serieRefresher = new SerieRefresher(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         if (LocalEnvironmentManager.isLocal()) {
-            googleWaitInterval = 2;
+            googleWaitInterval = 10;
         } else {
             googleWaitInterval = Integer.parseInt(configFileLoader.getConfig(GOOGLE_RETRY_INTERVAL));
         }

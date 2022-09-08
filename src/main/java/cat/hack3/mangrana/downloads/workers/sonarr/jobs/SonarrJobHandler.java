@@ -165,7 +165,7 @@ public class SonarrJobHandler implements Runnable {
         synchronized (orchestrator) {
             orchestrator.jobHasFileName(jobTitle);
             if (orchestrator.isWorkingWithAJob()) {
-                logger.nLog("this job will go to sleep zzz");
+                //logger.nLog("this job will go to sleep zzz");
                 try {
                     Instant beforeWait = Instant.now();
                     while (orchestrator.isWorkingWithAJob()) {
@@ -180,7 +180,7 @@ public class SonarrJobHandler implements Runnable {
                     Thread.currentThread().interrupt();
                     e.printStackTrace();
                 }
-                logger.nLog("this job is waking up !.!");
+                //logger.nLog("this job is waking up !.!");
             }
             sonarrJobFile.markDoing();
             orchestrator.jobWorking(jobTitle);

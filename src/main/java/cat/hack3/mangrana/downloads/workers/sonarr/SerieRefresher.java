@@ -19,8 +19,7 @@ public class SerieRefresher {
         sonarrApiGateway.refreshSerie(serie.getId());
         if (queueElementId != null)
             sonarrApiGateway.deleteQueueElement(queueElementId);
-        String plexSeriePath = serie.getPath().replaceFirst("/tv", "/mnt/mangrana_series");
-        plexCommander.scanByPath(plexSeriePath);
+        plexCommander.scanByPath(serie.getPath());
     }
 
     public void refreshSerieInSonarrAndPlex(SonarrSerie serie) {
