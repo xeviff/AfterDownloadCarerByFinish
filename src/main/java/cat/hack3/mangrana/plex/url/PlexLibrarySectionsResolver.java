@@ -30,7 +30,7 @@ public class PlexLibrarySectionsResolver {
         String keyFolder = fullDestinationPath.replaceFirst(plexPathStarter,"").split("/")[1];
         Document xmlDocument = commandLauncher.retrieveSectionsInfo();
         XPath xPath = XPathFactory.newInstance().newXPath();
-        String startingLocationText = plexPathStarter.concat("/").concat(keyFolder);
+        String startingLocationText = plexPathStarter.concat("/").concat(keyFolder).concat("/");
         String expression = "/MediaContainer/Directory/Location[starts-with(@path, '"+startingLocationText+"')]";
         try {
             NodeList candidatesNodes = (NodeList) xPath.compile(expression).evaluate(xmlDocument, XPathConstants.NODESET);

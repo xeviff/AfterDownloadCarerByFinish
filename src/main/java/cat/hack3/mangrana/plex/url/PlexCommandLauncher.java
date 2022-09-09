@@ -39,8 +39,8 @@ public class PlexCommandLauncher {
     }
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException {
-        String totest="/tv/Series_animacion/Rick y Morty (2013)";
-        new PlexCommandLauncher(new ConfigFileLoader()).scanByPath(totest);
+        String toRefresh="/tv/Series/C/Cobra Kai (2018)";
+        new PlexCommandLauncher(new ConfigFileLoader()).scanByPath(toRefresh);
     }
 
     public void scanByPath(String fullDestinationPath) {

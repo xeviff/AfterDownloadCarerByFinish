@@ -5,7 +5,8 @@ public class EasyLogger extends Output {
     private final String identifier;
 
     public EasyLogger() {
-        identifier = Thread.currentThread().getStackTrace()[2].getClass().getSimpleName();
+        String packagedClassName = Thread.currentThread().getStackTrace()[2].getClassName();
+        identifier = packagedClassName.substring(packagedClassName.lastIndexOf('.')+1);
     }
     public EasyLogger(String identifier) {
         this.identifier = identifier;
