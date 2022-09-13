@@ -31,13 +31,22 @@ public class PlexLibrarySectionsResolver {
         Document xmlDocument = commandLauncher.retrieveSectionsInfo();
         XPath xPath = XPathFactory.newInstance().newXPath();
         String startingLocationText = plexPathStarter.concat("/").concat(keyFolder).concat("/");
-        String expression = "/MediaContainer/Directory/Location[starts-with(@path, '"+startingLocationText+"')]";
+        String directoryNodeOfLocation = getDirectoryKeyValue(xmlDocument, xPath, startingLocationText);
+        if (directoryNodeOfLocation == null) {
+            startingLocationText = plexPathStarter.concat("/").concat(keyFolder);
+            return getDirectoryKeyValue(xmlDocument, xPath, startingLocationText);
+        } else
+            return directoryNodeOfLocation;
+    }
+
+    private String getDirectoryKeyValue(Document xmlDocument, XPath xPath, String startingLocationText) {
+        String expression = "/MediaContainer/Directory/Location[starts-with(@path, '"+ startingLocationText +"')]";
         try {
             NodeList candidatesNodes = (NodeList) xPath.compile(expression).evaluate(xmlDocument, XPathConstants.NODESET);
             Node directoryNodeOfLocation  = candidatesNodes.item(0).getParentNode();
             return ((DeferredElementImpl) directoryNodeOfLocation).getAttribute("key");
-        } catch (XPathExpressionException e) {
-            Output.log("could not resolve the section of the movie in plex");
+        } catch (XPathExpressionException | NullPointerException e) {
+            Output.log("could not resolve the section of the element in plex "+startingLocationText);
         }
         return null;
     }

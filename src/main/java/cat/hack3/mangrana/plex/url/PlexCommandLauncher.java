@@ -39,7 +39,7 @@ public class PlexCommandLauncher {
     }
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException {
-        String toRefresh="/tv/Series/C/Cobra Kai (2018)";
+        String toRefresh="/tv/Series/S/Succession (2018)";
         new PlexCommandLauncher(new ConfigFileLoader()).scanByPath(toRefresh);
     }
 
@@ -56,8 +56,8 @@ public class PlexCommandLauncher {
             httpclient.execute(httpGET);
             String urlWithTokenHidden = httpGET.getURI().toString().replaceFirst(config.getConfig(PLEX_TOKEN), "__plex_token__");
             logger.nLog("Launched URL command: {0}",  urlWithTokenHidden);
-        } catch (URISyntaxException | IOException e) {
-            logger.nLog("SHOULD NOT HAPPEN: Some error has happened using the URL <{0}>", plexRefreshURL);
+        } catch (Exception e) {
+            logger.nHLog("Some error has happened using the URL <{0}>", plexRefreshURL);
             e.printStackTrace();
         }
     }

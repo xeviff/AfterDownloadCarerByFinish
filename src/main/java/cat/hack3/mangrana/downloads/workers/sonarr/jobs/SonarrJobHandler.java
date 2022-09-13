@@ -114,9 +114,13 @@ public class SonarrJobHandler implements Runnable {
             setJobStateWorkingOrSleep();
 
             if (EPISODE.equals(type)) {
-                new EpisodeHandler(logger, configFileLoader).initValues(elementName, serieId).handle();
+                new EpisodeHandler(logger, configFileLoader)
+                        .initValues(elementName, serieId)
+                        .handle();
             } else {
-                new SeasonHandler(logger, configFileLoader).initValues(elementName, serieId, episodeCount).handle();
+                new SeasonHandler(logger, configFileLoader)
+                        .initValues(elementName, serieId, episodeCount)
+                        .handle();
             }
             sonarrJobFile.markDone();
         } catch (TooMuchTriesException | IOException | IncorrectWorkingReferencesException | NoElementFoundException e) {

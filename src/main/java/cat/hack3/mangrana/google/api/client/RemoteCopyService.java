@@ -131,7 +131,7 @@ public class RemoteCopyService {
                 logger.nLog(msgIntro, episodeFile.getName());
             }
         } catch (IOException e) {
-            logger.nLog("SHOULD NOT HAPPEN! The <{0}> file could not been copied to <{1}> ( GDrive id: {2} )"
+            logger.nHLog("The <{0}> file could not been copied to <{1}> ( GDrive id: {2} )"
                     ,episodeFile.getName(), destinationDescription, destinationSerieFolder);
             e.printStackTrace();
         }
