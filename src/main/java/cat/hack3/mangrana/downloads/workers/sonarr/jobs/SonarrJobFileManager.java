@@ -1,5 +1,6 @@
 package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
+import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.utils.PathUtils;
 
 import java.io.File;
@@ -8,15 +9,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static cat.hack3.mangrana.config.LocalEnvironmentManager.NAS_LOCAL_TEST_JOBS_PATH;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.JobLocation;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.JobLocation.PATH_DOING;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.JobLocation.PATH_TODO;
+import static cat.hack3.mangrana.utils.PathUtils.addSubFolder;
 
 public class SonarrJobFileManager {
 
     private SonarrJobFileManager(){}
 
-    public static final String JOBS_DIRECTORY_PATH = "/jobs/";
+    public static final String JOBS_FOLDER_NAME = "jobs";
+
 
     public static void moveUncompletedJobsToRetry() {
         File jobsDir = new File(getAbsolutePath(PATH_DOING));
@@ -39,7 +43,11 @@ public class SonarrJobFileManager {
     }
 
     public static String getAbsolutePath(JobLocation location) {
-        return System.getProperty("user.dir") + JOBS_DIRECTORY_PATH + location.folderName;
+        String jobsFolderPath = LocalEnvironmentManager.isLocal()
+                ? NAS_LOCAL_TEST_JOBS_PATH
+                : addSubFolder(PathUtils.getRootProjectPath(), JOBS_FOLDER_NAME);
+
+        return addSubFolder(jobsFolderPath, location.getFolderName());
     }
 
 }

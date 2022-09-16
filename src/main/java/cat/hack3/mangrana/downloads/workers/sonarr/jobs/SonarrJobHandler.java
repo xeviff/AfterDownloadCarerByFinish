@@ -82,7 +82,7 @@ public class SonarrJobHandler implements Runnable {
             } else {
                 new SeasonHandler(logger, configFileLoader).initValues(elementName, serieId, episodeCount).crashHandle();
             }
-            sonarrJobFile.markDone();
+            sonarrJobFile.forceMarkDone();
         }
     }
 

@@ -1,5 +1,6 @@
 package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
+import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.utils.yml.FakeYmlLoader;
 
@@ -16,12 +17,20 @@ public class SonarrJobFile {
         PATH_TODO("to_do"),
         PATH_DOING("doing"),
         PATH_DONE("done");
-        final String folderName;
+        private final String folderName;
+        private static final String LOCAL_PATH_TODO = "local_test";
         JobLocation(String folderName) {
             this.folderName=folderName;
         }
         public String getFolderName(){
-            return folderName;
+            return getLocalNameIfNecessary(this);
+        }
+        private String getLocalNameIfNecessary(JobLocation location) {
+            if (LocalEnvironmentManager.isLocal()
+                    && location.equals(JobLocation.PATH_TODO)) {
+                return LOCAL_PATH_TODO;
+            }
+            return location.folderName;
         }
     }
 
@@ -63,6 +72,14 @@ public class SonarrJobFile {
 
     public void markDone() {
         jobFile = shiftFileFolder(jobFile, PATH_DOING, PATH_DONE);
+    }
+
+    public void forceMarkDone() {
+        if (jobFile.getAbsolutePath().contains(PATH_DOING.folderName)) {
+            jobFile = shiftFileFolder(jobFile, PATH_DOING, PATH_DONE);
+        } else if (jobFile.getAbsolutePath().contains(PATH_TODO.folderName)) {
+            jobFile = shiftFileFolder(jobFile, PATH_TODO, PATH_DONE);
+        }
     }
 
     public void driveBack() {

@@ -14,7 +14,16 @@ import static cat.hack3.mangrana.utils.Output.msg;
 
 public class PathUtils {
 
+    public static final char SEPARATOR = '/';
+
     private PathUtils(){}
+
+    public static String addSubFolder(String parentFolder, String childFolder) {
+        return parentFolder+ SEPARATOR +childFolder;
+    }
+    public static String rootFolder(String rootFolderName){
+        return addSubFolder("",rootFolderName);
+    }
 
     public static String getParentFromFullPath(String absolutePath){
         return Paths
@@ -25,7 +34,7 @@ public class PathUtils {
     }
 
     public static String getCurrentFromFullPath(String absolutePath) {
-        return absolutePath.substring(absolutePath.lastIndexOf('/')+1);
+        return absolutePath.substring(absolutePath.lastIndexOf(SEPARATOR)+1);
     }
 
     public static File shiftFileFolder(File jobFile, SonarrJobFile.JobLocation folderOrigin, SonarrJobFile.JobLocation folderDestination) {
@@ -58,5 +67,9 @@ public class PathUtils {
 
     private static void log(String msg){
         Output.log("PathUtils: "+msg);
+    }
+
+    public static String getRootProjectPath() {
+        return System.getProperty("user.dir");
     }
 }
