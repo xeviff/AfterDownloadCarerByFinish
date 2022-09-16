@@ -2,6 +2,7 @@ package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.Handler;
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.JobsResume;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
@@ -36,9 +37,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     RemoteCopyService copyService;
     SerieRefresher serieRefresher;
 
-    Map<String, String> jobsState = new HashMap<>();
-    Map<String, String> jobsStatePrintedLastTime = new HashMap<>();
-    int reportDelayCounter = 0;
+    JobsResume jobsState = new JobsResume();
     Set<String> handlingFiles = new HashSet<>();
     String jobCurrentlyInWork;
 
@@ -70,7 +69,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 SonarrJobHandler job = null;
                 try {
                     SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
-                    if (!jobFileManager.hasInfo()) {
+                    if (jobFileManager.hasNoInfo()) {
                         throw new IncorrectWorkingReferencesException("no valid info at file");
                     }
                     job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
@@ -97,7 +96,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
                 handleJobsInParallel(jobFiles, executor);
             }
-            resumeJobsLogPrint();
+            jobsState.resumeJobsLogPrint();
             waitMinutes(5);
             keepLooping = Boolean.parseBoolean(configFileLoader.getConfig(IMMORTAL_PROCESS));
         }
@@ -113,7 +112,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
             }
             try {
                 SonarrJobFile jobFileManager = new SonarrJobFile(jobFile);
-                if (!jobFileManager.hasInfo()) {
+                if (jobFileManager.hasNoInfo()) {
                     throw new IncorrectWorkingReferencesException("no valid info at file");
                 }
                 SonarrJobHandler job = new SonarrJobHandler(configFileLoader, jobFileManager, this);
@@ -144,8 +143,8 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         return jobTitle.equals(jobCurrentlyInWork);
     }
 
-    public void jobInitiated(String downloadId) {
-        jobsState.put(downloadId, "initiated");
+    public void jobInitiated(String jobTitle) {
+        jobsState.put(jobTitle, "initiated");
     }
 
     public void jobHasFileName(String jobTitle) {
@@ -170,31 +169,6 @@ public class SonarGrabbedDownloadsHandler implements Handler {
         jobsState.put(jobTitle, "error");
         handlingFiles.remove(fileName);
         jobCurrentlyInWork=null;
-    }
-
-    @SuppressWarnings("unchecked")
-    public void resumeJobsLogPrint() {
-        if (reportDelayCounter > 10 && !sameResumeAlreadyPrinted()) {
-            log("**** JOBS RESUME ****");
-            this.jobsState.forEach((jobName, state) ->
-                    log("* Job: {0} | current state: {1}"
-                                    , jobName, state)
-            );
-            reportDelayCounter = 0;
-            logWithDate("**** JOBS RESUME ****");
-            jobsStatePrintedLastTime = (Map<String, String>) ((HashMap<String, String>)jobsState).clone();
-        } else {
-            reportDelayCounter++;
-        }
-    }
-
-    public boolean sameResumeAlreadyPrinted() {
-        if (jobsStatePrintedLastTime.size() != jobsState.size()) return false;
-        for (Map.Entry<String, String> entry : jobsState.entrySet()) {
-            if (!jobsStatePrintedLastTime.containsKey(entry.getKey())) return false;
-            if (!jobsStatePrintedLastTime.get(entry.getKey()).equals(entry.getValue())) return false;
-        }
-        return true;
     }
 
 }

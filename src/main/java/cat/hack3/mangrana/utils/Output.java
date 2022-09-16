@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Output {
+
+    public static final String DATE_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss";
     protected Output(){}
 
     private static void log (String msg) {
@@ -20,7 +22,7 @@ public class Output {
     }
 
     public static String getCurrentTime() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat(DATE_TIME_FORMAT);
         return dateFormat.format(new Date());
     }
 

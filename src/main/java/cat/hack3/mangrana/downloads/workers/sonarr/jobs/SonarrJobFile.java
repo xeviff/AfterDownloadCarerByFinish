@@ -55,8 +55,8 @@ public class SonarrJobFile {
         return infoMap.get(key);
     }
 
-    public boolean hasInfo() {
-        return Objects.nonNull(infoMap);
+    public boolean hasNoInfo() {
+        return !Objects.nonNull(infoMap);
     }
 
     public File getFile () {
