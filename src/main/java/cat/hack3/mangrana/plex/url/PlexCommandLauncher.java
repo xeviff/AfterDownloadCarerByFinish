@@ -39,7 +39,7 @@ public class PlexCommandLauncher {
     }
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException {
-        String toRefresh="/tv/Series/S/Succession (2018)";
+        String toRefresh="/tv/Series/C/City on a Hill (2019)";
         new PlexCommandLauncher(new ConfigFileLoader()).scanByPath(toRefresh);
     }
 
@@ -65,8 +65,10 @@ public class PlexCommandLauncher {
     public String getPlexUrlPath2Refresh(String fullDestinationPath) {
         Pattern p = Pattern.compile(config.getConfig(SONARR_PATHS_STARTER).concat("(.+/.+ \\(\\d{4}\\))"));
         Matcher m = p.matcher(fullDestinationPath);
-        String pathInPlexDockerStart = config.getConfig(PLEX_PATHS_STARTER);
-        if (m.find()) return pathInPlexDockerStart.concat(m.group(1));
+        if (m.find()) {
+            String pathInPlexDockerStart = config.getConfig(PLEX_PATHS_STARTER);
+            return pathInPlexDockerStart.concat(m.group(1));
+        }
         return null;
     }
 

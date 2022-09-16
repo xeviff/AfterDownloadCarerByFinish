@@ -84,8 +84,9 @@ public class SonarGrabbedDownloadsHandler implements Handler {
                 }
             }
         }
-        log(">>>> finished --check and copy right away if possible-- round, now will start the normal process <<<<");
-        log("---------------------------------------------------------------------------------------------------");
+        log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
+        log("-------------------------------------------------------------------------------------------------------------------");
+        waitMinutes(1);
     }
 
     private void handleRestOfJobs() {
