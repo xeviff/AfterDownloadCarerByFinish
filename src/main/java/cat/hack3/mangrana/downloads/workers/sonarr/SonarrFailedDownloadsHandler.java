@@ -22,7 +22,7 @@ import static cat.hack3.mangrana.utils.Output.log;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromEpisode;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 import static java.util.stream.Collectors.groupingBy;
-
+@Deprecated
 public class SonarrFailedDownloadsHandler implements Handler {
 
     SonarrApiGateway sonarrApiGateway;

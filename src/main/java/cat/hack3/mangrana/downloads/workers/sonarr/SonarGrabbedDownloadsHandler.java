@@ -2,9 +2,9 @@ package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.Handler;
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.JobsResume;
+import cat.hack3.mangrana.downloads.workers.common.jobs.JobsResume;
+import cat.hack3.mangrana.downloads.workers.common.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
@@ -21,10 +21,10 @@ import java.util.concurrent.Executors;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.IMMORTAL_PROCESS;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.moveUncompletedJobsToRetry;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFileManager.retrieveJobFiles;
+import static cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager.JobFileType.SONARR_JOBS;
+import static cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager.moveUncompletedJobsToRetry;
+import static cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager.retrieveJobFiles;
 import static cat.hack3.mangrana.utils.Output.log;
-import static cat.hack3.mangrana.utils.Output.logWithDate;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
@@ -56,14 +56,14 @@ public class SonarGrabbedDownloadsHandler implements Handler {
 
     @Override
     public void handle() {
-        moveUncompletedJobsToRetry();
+        moveUncompletedJobsToRetry(SONARR_JOBS);
         handleJobsReadyToCopy();
         handleRestOfJobs();
     }
 
     private void handleJobsReadyToCopy() {
         log(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
-        List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
+        List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), SONARR_JOBS);
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
                 SonarrJobHandler job = null;
@@ -91,7 +91,7 @@ public class SonarGrabbedDownloadsHandler implements Handler {
     private void handleRestOfJobs() {
         boolean keepLooping = true;
         while (keepLooping) {
-            List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX));
+            List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), SONARR_JOBS);
             if (!jobFiles.isEmpty()) {
                 ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
                 handleJobsInParallel(jobFiles, executor);

@@ -1,7 +1,7 @@
 package cat.hack3.mangrana.utils;
 
 
-import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
+import cat.hack3.mangrana.downloads.workers.common.jobs.JobFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class PathUtils {
         return absolutePath.substring(absolutePath.lastIndexOf(SEPARATOR)+1);
     }
 
-    public static File shiftFileFolder(File jobFile, SonarrJobFile.JobLocation folderOrigin, SonarrJobFile.JobLocation folderDestination) {
+    public static File shiftFileFolder(File jobFile, JobFile.JobLocation folderOrigin, JobFile.JobLocation folderDestination) {
         try {
             Path newPath = Files.move(
                     jobFile.toPath()

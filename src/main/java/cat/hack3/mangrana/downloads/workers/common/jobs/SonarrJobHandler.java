@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
+package cat.hack3.mangrana.downloads.workers.common.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
@@ -7,6 +7,7 @@ import cat.hack3.mangrana.downloads.workers.sonarr.EpisodeHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SeasonHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SerieRefresher;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
@@ -27,9 +28,8 @@ import java.time.Instant;
 import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_RETRY_INTERVAL;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.GrabInfo.*;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.EPISODE;
-import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.SEASON;
+import static cat.hack3.mangrana.downloads.workers.common.jobs.SonarrJobHandler.DownloadType.EPISODE;
+import static cat.hack3.mangrana.downloads.workers.common.jobs.SonarrJobHandler.DownloadType.SEASON;
 
 public class SonarrJobHandler implements Runnable {
 
@@ -87,14 +87,14 @@ public class SonarrJobHandler implements Runnable {
     }
 
     private void loadInfoFromJobFile() {
-        fullTitle = sonarrJobFile.getInfo(SONARR_RELEASE_TITLE);
+        fullTitle = sonarrJobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_RELEASE_TITLE);
         jobTitle = fullTitle.substring(0, 45)+"..";
         logger = new EasyLogger("*> "+jobTitle);
-        downloadId = sonarrJobFile.getInfo(SONARR_DOWNLOAD_ID);
-        episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SONARR_RELEASE_EPISODECOUNT));
+        downloadId = sonarrJobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_DOWNLOAD_ID);
+        episodeCount = Integer.parseInt(sonarrJobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_RELEASE_EPISODECOUNT));
         type = episodeCount == 1 ? EPISODE : SEASON;
-        serieId = Integer.parseInt(sonarrJobFile.getInfo(SONARR_SERIES_ID));
-        fileName = sonarrJobFile.getInfo(JAVA_FILENAME);
+        serieId = Integer.parseInt(sonarrJobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_SERIES_ID));
+        fileName = sonarrJobFile.getInfo(SonarrJobFile.GrabInfo.JAVA_FILENAME);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class SonarrJobHandler implements Runnable {
     private void writeElementNameToJobInfo(String elementName) throws IOException {
         try (Writer output = new BufferedWriter(
                 new FileWriter(sonarrJobFile.getFile().getAbsolutePath(), true))) {
-            output.append(JAVA_FILENAME.name().toLowerCase().concat(": "+elementName));
+            output.append(SonarrJobFile.GrabInfo.JAVA_FILENAME.name().toLowerCase().concat(": "+elementName));
             logger.nLog("persisted elementName to job file -> "+elementName);
         }
     }

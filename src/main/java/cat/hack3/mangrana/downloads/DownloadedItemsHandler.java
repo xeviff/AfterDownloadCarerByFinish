@@ -41,9 +41,8 @@ public class DownloadedItemsHandler {
             actionHandler.get(ActionType.RADARR_FAILED).handle();
             actionHandler.get(ActionType.SONARR_FAILED).handle();
         }
-
         actionHandler.get(ActionType.SONARR_GRAB).handle();
-
+        actionHandler.get(ActionType.RADARR_GRAB).handle();
         logWithDate("that's all, folks");
     }
 

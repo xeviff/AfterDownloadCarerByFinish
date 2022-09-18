@@ -11,7 +11,7 @@ import cat.hack3.mangrana.radarr.api.schema.queue.Record;
 import java.io.IOException;
 
 import static cat.hack3.mangrana.utils.Output.log;
-
+@Deprecated
 public class RadarrFailedDownloadsHandler implements Handler {
 
     RadarrApiGateway radarrApiGateway;

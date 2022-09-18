@@ -8,4 +8,5 @@ services:
     volumes:
       - ./config:/config
       - ./tokens:/tokens
-      - /volume1/jobs/sonarr:/jobs
+      - /volume1/jobs/sonarr:/jobs/sonarr
+      - /volume1/jobs/radarr:/jobs/radarr

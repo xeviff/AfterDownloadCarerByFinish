@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
+package cat.hack3.mangrana.downloads.workers.common.jobs;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
