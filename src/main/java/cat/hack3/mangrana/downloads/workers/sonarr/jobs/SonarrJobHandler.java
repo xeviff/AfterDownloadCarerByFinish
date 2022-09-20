@@ -2,6 +2,7 @@ package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
+import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
 import cat.hack3.mangrana.downloads.workers.common.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.EpisodeHandler;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.SONARR_RETRY_INTERVAL;
+import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile.GrabInfo.SONARR_RELEASE_TITLE;
 import static cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler.DownloadType.EPISODE;
 
 public class SonarrJobHandler extends JobHandler {
@@ -32,7 +34,7 @@ public class SonarrJobHandler extends JobHandler {
     private int serieId;
     private int episodeCount;
 
-    public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFile sonarrJobFile, SonarGrabbedDownloadsHandler caller) throws IOException {
+    public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFile sonarrJobFile, JobOrchestrator caller) throws IOException {
         super(configFileLoader, sonarrJobFile, caller);
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         serieRefresher = new SerieRefresher(configFileLoader);
@@ -45,7 +47,7 @@ public class SonarrJobHandler extends JobHandler {
 
     @SuppressWarnings("unchecked")
     protected void loadInfoFromJobFile() {
-        fullTitle = jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_RELEASE_TITLE);
+        fullTitle = jobFile.getInfo(SONARR_RELEASE_TITLE);
         jobTitle = fullTitle.substring(0, 45)+"..";
         logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_DOWNLOAD_ID);

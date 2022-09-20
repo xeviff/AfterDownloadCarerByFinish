@@ -2,8 +2,8 @@ package cat.hack3.mangrana.downloads;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.common.Handler;
+import cat.hack3.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFailedDownloadsHandler;
-import cat.hack3.mangrana.downloads.workers.radarr.RadarrFinishedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarrFailedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
@@ -27,7 +27,7 @@ public class DownloadedItemsHandler {
         configFileLoader = new ConfigFileLoader();
         actionHandler = new EnumMap<>(ActionType.class);
         actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader));
-        actionHandler.put(ActionType.RADARR_GRAB, new RadarrFinishedDownloadsHandler(configFileLoader));
+        actionHandler.put(ActionType.RADARR_GRAB, new RadarGrabbedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.SONARR_FAILED, new SonarrFailedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.RADARR_FAILED, new RadarrFailedDownloadsHandler(configFileLoader));
     }
