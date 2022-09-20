@@ -1,7 +1,7 @@
 package cat.hack3.mangrana.downloads;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.downloads.workers.Handler;
+import cat.hack3.mangrana.downloads.workers.common.Handler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFailedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarrFinishedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;

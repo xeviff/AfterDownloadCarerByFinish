@@ -1,7 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.radarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.downloads.workers.Handler;
+import cat.hack3.mangrana.downloads.workers.common.Handler;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.radarr.api.client.gateway.RadarrApiGateway;

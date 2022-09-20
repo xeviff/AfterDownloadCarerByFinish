@@ -1,10 +1,11 @@
 package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.downloads.workers.Handler;
+import cat.hack3.mangrana.downloads.workers.common.Handler;
+import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobsResume;
-import cat.hack3.mangrana.downloads.workers.common.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
@@ -28,7 +29,7 @@ import static cat.hack3.mangrana.utils.Output.log;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
-public class SonarGrabbedDownloadsHandler implements Handler {
+public class SonarGrabbedDownloadsHandler implements Handler, JobOrchestrator {
 
     private final EasyLogger logger;
 

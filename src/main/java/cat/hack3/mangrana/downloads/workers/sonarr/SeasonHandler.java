@@ -1,7 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.sonarr;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.downloads.workers.RetryEngine;
+import cat.hack3.mangrana.downloads.workers.common.RetryEngine;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;

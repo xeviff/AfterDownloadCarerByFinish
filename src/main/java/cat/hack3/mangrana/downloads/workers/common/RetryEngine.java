@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.downloads.workers;
+package cat.hack3.mangrana.downloads.workers.common;
 
 import cat.hack3.mangrana.exception.TooMuchTriesException;
 
