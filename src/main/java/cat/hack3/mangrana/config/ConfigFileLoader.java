@@ -29,6 +29,7 @@ public class ConfigFileLoader {
         PLEX_SECTION_REFRESH_URI,
         GOOGLE_RETRY_INTERVAL,
         SONARR_RETRY_INTERVAL,
+        RADARR_RETRY_INTERVAL,
         SONARR_PATHS_STARTER,
         PLEX_PATHS_STARTER
     }

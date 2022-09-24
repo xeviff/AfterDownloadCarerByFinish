@@ -1,6 +1,8 @@
 package cat.hack3.mangrana.radarr.api.client.gateway;
 
-import cat.hack3.mangrana.radarr.api.client.schema.command.RefreshMoviesCommand;
+import cat.hack3.mangrana.radarr.api.schema.command.RefreshMoviesCommand;
+import cat.hack3.mangrana.radarr.api.schema.movie.MovieResource;
+import cat.hack3.mangrana.radarr.api.schema.queue.Movie;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 import cat.hack3.mangrana.utils.rest.APIInterface;
 
@@ -23,9 +25,14 @@ public interface RadarrAPIInterface extends APIInterface {
     @Consumes({ MediaType.APPLICATION_JSON })
     void removeQueueItem(@PathParam("id") int itemId, @QueryParam("removeFromClient") boolean removeFromClient, @QueryParam("apikey") String apikey);
 
+    @GET
+    @Path("/movie/{id}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    MovieResource getMovieById(@PathParam("id") int movieId, @QueryParam("apikey") String apikey);
 
     @POST
     @Path("/command")
     @Consumes({ MediaType.APPLICATION_JSON })
     void refreshMoviesCommand(RefreshMoviesCommand command, @QueryParam("apikey") String apikey);
+
 }

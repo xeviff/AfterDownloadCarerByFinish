@@ -1,12 +1,13 @@
 package cat.hack3.mangrana.radarr.api.client.gateway;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
-import cat.hack3.mangrana.radarr.api.client.schema.command.RefreshMoviesCommand;
+import cat.hack3.mangrana.radarr.api.schema.command.RefreshMoviesCommand;
+import cat.hack3.mangrana.radarr.api.schema.movie.MovieResource;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
 import cat.hack3.mangrana.utils.rest.APIProxyBuilderSingleton;
 
-import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.RADARR_API_KEY;
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.RADARR_API_HOST;
+import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.RADARR_API_KEY;
 import static cat.hack3.mangrana.utils.Output.log;
 
 public class RadarrApiGateway {
@@ -21,6 +22,12 @@ public class RadarrApiGateway {
 
     public QueueResourcePagingResource getQueue() {
         return proxy.getQueue(true, apiKey);
+    }
+
+    public MovieResource getMovieById(Integer movieId) {
+        MovieResource movie = proxy.getMovieById(movieId, apiKey);
+        log("retrieved serie from sonarr with id "+movieId);
+        return movie;
     }
 
     public void removeQueueItem(int itemId) {

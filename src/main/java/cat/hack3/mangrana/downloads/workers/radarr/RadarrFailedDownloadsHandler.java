@@ -3,6 +3,7 @@ package cat.hack3.mangrana.downloads.workers.radarr;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.common.Handler;
 import cat.hack3.mangrana.exception.NoElementFoundException;
+import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.radarr.api.client.gateway.RadarrApiGateway;
 import cat.hack3.mangrana.radarr.api.schema.queue.QueueResourcePagingResource;
@@ -35,12 +36,12 @@ public class RadarrFailedDownloadsHandler implements Handler {
     private void processRecord(Record queueItem) {
         try {
             copyService
-                    .copyVideoFile(queueItem.getTitle(), queueItem.getMovie().getPath());
+                    .copyMovieFile(queueItem.getTitle(), queueItem.getMovie().getPath());
             radarrApiGateway
                     .refreshMovie(queueItem.getMovieId());
             radarrApiGateway
                     .removeQueueItem(queueItem.getId());
-        } catch (IOException | NoElementFoundException e) {
+        } catch (IOException | NoElementFoundException | TooMuchTriesException e) {
            log("could not copy the file :( "+queueItem.getTitle());
            e.printStackTrace();
         }

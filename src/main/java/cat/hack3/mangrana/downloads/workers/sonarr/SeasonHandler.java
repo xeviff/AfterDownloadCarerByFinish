@@ -18,7 +18,7 @@ import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.DO
 import static cat.hack3.mangrana.utils.Output.msg;
 import static cat.hack3.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
-public class SeasonHandler extends ElementHandler {
+public class SeasonHandler extends SonarrElementHandler {
 
     private int episodeCount;
 

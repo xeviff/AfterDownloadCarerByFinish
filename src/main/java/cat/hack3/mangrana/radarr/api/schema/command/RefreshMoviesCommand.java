@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.radarr.api.client.schema.command;
+package cat.hack3.mangrana.radarr.api.schema.command;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

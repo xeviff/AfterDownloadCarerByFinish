@@ -21,17 +21,27 @@ public class ClientSchemaGenerator {
     }
 
     public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
-         new ClientSchemaGenerator().generateSonarrHistoryClientSchema();
+         new ClientSchemaGenerator().generateRadarrMovieClientSchema();
     }
 
     @SuppressWarnings("unused")
-    private void generateRadarrClientSchema() throws  IOException {
+    private void generateRadarrQueueClientSchema() throws  IOException {
         generate(
                 configFileLoader.getConfig(RADARR_API_HOST),
-                configFileLoader.getConfig(RADARR_API_KEY),
                 "/api/v3/queue?includeMovie=true?apikey=",
+                configFileLoader.getConfig(RADARR_API_KEY),
                 "cat.hack3.mangrana.radarr.api.schema.queue",
                 "QueueResourcePagingResource");
+    }
+
+    @SuppressWarnings("unused")
+    private void generateRadarrMovieClientSchema() throws  IOException {
+        generate(
+                configFileLoader.getConfig(RADARR_API_HOST),
+                "/api/v3/movie/9216?apikey=",
+                configFileLoader.getConfig(RADARR_API_KEY),
+                "cat.hack3.mangrana.radarr.api.schema.movie",
+                "MovieResource");
     }
 
     @SuppressWarnings("unused")
@@ -54,6 +64,7 @@ public class ClientSchemaGenerator {
                 "SonarrSeries");
     }
 
+    @SuppressWarnings("unused")
     private void generateSonarrHistoryClientSchema() throws  IOException {
         generate(
                 configFileLoader.getConfig(SONARR_API_HOST),

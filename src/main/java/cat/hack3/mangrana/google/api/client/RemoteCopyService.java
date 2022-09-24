@@ -37,21 +37,12 @@ public class RemoteCopyService {
         this.retryEngine = retryEngine;
     }
 
-    public void copyVideoFile(String downloadedFileName, String destinationFullPath) throws IOException, NoElementFoundException {
-        File videoFile = googleDriveApiGateway
-                .lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
-        if (Objects.nonNull(videoFile)) {
-            File destinationFolder = getOrCreateMovieFolderByPath(destinationFullPath);
-            googleDriveApiGateway
-                    .copyFile(videoFile.getId(), destinationFolder.getId());
-            logger.nLog(">> copied successfully!! :D ");
-            logger.nLog("fileName: "+downloadedFileName);
-            logger.nLog("fileId: "+videoFile.getId());
-            logger.nLog("destinationFolderName: "+destinationFullPath);
-            logger.nLog("destinationFolderId: "+destinationFolder.getId());
-        } else {
-            logger.nLog("Video element not found in google drive :( " + downloadedFileName);
-        }
+    public void copyMovieFile(String downloadedFileName, String destinationFullPath) throws IOException, NoElementFoundException, TooMuchTriesException {
+        File downloadedFile = getDownloadedVideoFile(downloadedFileName);
+        File destinationFolder = getOrCreateMovieFolderByPath(destinationFullPath);
+        googleDriveApiGateway.copyFile(downloadedFile.getId(), destinationFolder.getId());
+        logger.nLog("Movie file <{0}> has been successfully copied to <{1}> ( GDrive id: {2} )",
+                downloadedFile, destinationFullPath, destinationFolder.getId());
     }
 
     private File getOrCreateMovieFolderByPath(String destinationFullPath) throws IOException, NoElementFoundException {
@@ -97,27 +88,33 @@ public class RemoteCopyService {
     }
 
     public void copyEpisodeFromDownloadToItsLocation(String downloadedFileName, String destinationFullPath, String seasonFolderName) throws IOException, NoElementFoundException, TooMuchTriesException {
-        String destinationDescription = msg("<{0}/{1}>",destinationFullPath, seasonFolderName);
-        final int[] showedCount = {0};
-        Supplier<File> getDownloadedEpisodeFile = () -> {
-            try {
-                return googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
-            } catch (Exception e) {
-                if (showedCount[0] ==0)
-                    logger.nLog("Could not find yet the file " + downloadedFileName);
-                showedCount[0]++;
-                return null;
-            }
-        };
-        File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile);
-        if (Objects.isNull(downloadedFile))
-            throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+downloadedFileName);
+        File downloadedFile = getDownloadedVideoFile(downloadedFileName);
 
         String destinationSerieFolderName = PathUtils.getCurrentFromFullPath(destinationFullPath);
         File destinationSerieFolder = getOrCreateSerieFolder(destinationFullPath, destinationSerieFolderName);
         File seasonFolder = getOrCreateSeasonFolder(seasonFolderName, destinationSerieFolder);
 
-        copySeasonEpisode(downloadedFile, seasonFolder.getId(), destinationDescription);
+        copySeasonEpisode(downloadedFile, seasonFolder.getId(), msg("<{0}/{1}>",destinationFullPath, seasonFolderName));
+    }
+
+    private File getDownloadedVideoFile(String downloadedFileName) throws TooMuchTriesException, NoElementFoundException {
+        final int[] showedCount = {0};
+        Supplier<File> getDownloadedEpisodeFile = () -> {
+            try {
+                return googleDriveApiGateway.lookupElementByName(downloadedFileName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
+            } catch (Exception e) {
+                if (showedCount[0] ==0) {
+                    logger.nLog("Could not find yet the file " + downloadedFileName);
+                }
+                showedCount[0]++;
+                return null;
+            }
+        };
+        File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile);
+        if (Objects.isNull(downloadedFile)) {
+            throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+ downloadedFileName);
+        }
+        return downloadedFile;
     }
 
     private void copySeasonEpisode(File episodeFile, String destinationSerieFolder, String destinationDescription) {

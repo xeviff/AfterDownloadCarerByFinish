@@ -13,5 +13,6 @@ plex_url: https://your-plex.domain.is
 plex_section_refresh_uri: /library/sections/{section_id}/refresh
 google_retry_interval: 30
 sonarr_retry_interval: 5
+radarr_retry_interval: 5
 sonarr_paths_starter: /tv
 plex_paths_starter: /mnt/mangrana_series

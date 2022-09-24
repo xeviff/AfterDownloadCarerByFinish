@@ -1,4 +1,4 @@
-package cat.hack3.mangrana.downloads.workers.sonarr;
+package cat.hack3.mangrana.downloads.workers.common;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
@@ -7,7 +7,6 @@ import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
 import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
-import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.utils.EasyLogger;
 
 import java.io.IOException;
@@ -18,35 +17,31 @@ public abstract class ElementHandler {
 
     protected boolean initiated=false;
 
+    protected int appElementId;
+    protected String elementName;
     protected final int googleWaitInterval;
 
     protected final EasyLogger logger;
     protected final ConfigFileLoader configFileLoader;
-    protected final SonarrApiGateway sonarrApiGateway;
     protected final GoogleDriveApiGateway googleDriveApiGateway;
     protected final RemoteCopyService copyService;
-    protected final SerieRefresher serieRefresher;
 
-    protected String elementName;
-    protected int serieId;
 
     protected ElementHandler(EasyLogger logger, ConfigFileLoader configFileLoader) throws IOException {
         this.logger = logger;
         this.configFileLoader = configFileLoader;
-        this.sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         this.googleDriveApiGateway = new GoogleDriveApiGateway();
-        this.serieRefresher = new SerieRefresher(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
         if (LocalEnvironmentManager.isLocal()) {
             googleWaitInterval = 10;
         } else {
             googleWaitInterval = Integer.parseInt(configFileLoader.getConfig(GOOGLE_RETRY_INTERVAL));
         }
-
     }
-    public ElementHandler initValues (String elementName, int serieId){
+
+    public ElementHandler initValues (String elementName, int appElementId){
         this.elementName = elementName;
-        this.serieId = serieId;
+        this.appElementId = appElementId;
         initiated=true;
         return this;
     }
@@ -57,5 +52,5 @@ public abstract class ElementHandler {
     protected void log(String msg, Object... params) {
         logger.nLog(msg, params);
     }
-    
+
 }
