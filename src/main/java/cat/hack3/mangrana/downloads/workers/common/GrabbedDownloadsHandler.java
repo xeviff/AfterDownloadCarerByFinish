@@ -1,6 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.common;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobFile;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
@@ -49,7 +50,7 @@ public abstract class GrabbedDownloadsHandler implements Handler, JobOrchestrato
     }
 
     private void handleJobsReadyToCopy() {
-        log(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
+        log(">>>> in first place, going to try to copy those {0} elements that are already downloaded <<<<", jobFileType.getFolderName());
         List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), jobFileType);
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
@@ -73,7 +74,7 @@ public abstract class GrabbedDownloadsHandler implements Handler, JobOrchestrato
         }
         log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
         log("-------------------------------------------------------------------------------------------------------------------");
-        waitMinutes(1);
+        if (!LocalEnvironmentManager.isLocal()) waitMinutes(1);
     }
 
     @SuppressWarnings("rawtypes")

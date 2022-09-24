@@ -26,7 +26,7 @@ public class RadarrApiGateway {
 
     public MovieResource getMovieById(Integer movieId) {
         MovieResource movie = proxy.getMovieById(movieId, apiKey);
-        log("retrieved serie from sonarr with id "+movieId);
+        log("retrieved movie from radarr with id "+movieId);
         return movie;
     }
 

@@ -2,13 +2,13 @@ package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
+import cat.hack3.mangrana.downloads.workers.common.ElementHandler;
 import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
 import cat.hack3.mangrana.downloads.workers.common.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.EpisodeHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SeasonHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SerieRefresher;
-import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
@@ -55,6 +55,11 @@ public class SonarrJobHandler extends JobHandler {
         type = episodeCount == 1 ? EPISODE : DownloadType.SEASON;
         serieId = Integer.parseInt(jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_SERIES_ID));
         fileName = jobFile.getInfo(SonarrJobFile.GrabInfo.JAVA_FILENAME);
+    }
+
+    @Override
+    protected ElementHandler getInitiatedHandler() throws IOException {
+        return new EpisodeHandler(logger, configFileLoader).initValues(elementName, serieId);
     }
 
     protected void retrieveFileNameFromArrApp() throws TooMuchTriesException {

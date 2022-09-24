@@ -1,16 +1,13 @@
 package cat.hack3.mangrana.downloads.workers.common.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
+import cat.hack3.mangrana.downloads.workers.common.ElementHandler;
 import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
-import cat.hack3.mangrana.downloads.workers.sonarr.EpisodeHandler;
-import cat.hack3.mangrana.downloads.workers.sonarr.SerieRefresher;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.google.api.client.RemoteCopyService;
-import cat.hack3.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
-import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
 import cat.hack3.mangrana.utils.EasyLogger;
 import org.apache.commons.lang.StringUtils;
 
@@ -26,10 +23,7 @@ public abstract class JobHandler implements Runnable {
     protected EasyLogger logger;
 
     protected ConfigFileLoader configFileLoader;
-    protected SonarrApiGateway sonarrApiGateway;
-    protected GoogleDriveApiGateway googleDriveApiGateway;
     protected RemoteCopyService copyService;
-    protected SerieRefresher serieRefresher;
     @SuppressWarnings("rawtypes")
     protected JobFile jobFile;
 
@@ -38,21 +32,19 @@ public abstract class JobHandler implements Runnable {
 
     protected String fullTitle;
     protected String elementName;
-    protected int serieId;
     protected String fileName;
     protected String downloadId;
 
     @SuppressWarnings("rawtypes")
     protected JobHandler(ConfigFileLoader configFileLoader, JobFile jobFile, JobOrchestrator caller) throws IOException {
         this.configFileLoader = configFileLoader;
-        sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         copyService = new RemoteCopyService(configFileLoader);
-        googleDriveApiGateway = new GoogleDriveApiGateway();
-        serieRefresher = new SerieRefresher(configFileLoader);
         this.jobFile = jobFile;
         orchestrator = caller;
     }
 
+    protected abstract void loadInfoFromJobFile();
+    protected abstract ElementHandler getInitiatedHandler() throws IOException;
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
         loadInfoFromJobFile();
         if (StringUtils.isEmpty(fileName)) {
@@ -60,12 +52,10 @@ public abstract class JobHandler implements Runnable {
         } else {
             elementName = fileName;
             logger.nLog("going to try handle the following element: "+elementName);
-            new EpisodeHandler(logger, configFileLoader).initValues(elementName, serieId).crashHandle();
+            getInitiatedHandler().crashHandle();
             jobFile.forceMarkDone();
         }
     }
-
-    protected abstract void loadInfoFromJobFile();
 
     @Override
     public void run() {

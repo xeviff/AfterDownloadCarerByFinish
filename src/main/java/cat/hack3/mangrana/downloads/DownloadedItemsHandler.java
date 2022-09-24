@@ -23,7 +23,7 @@ public class DownloadedItemsHandler {
 
     private DownloadedItemsHandler() throws IncorrectWorkingReferencesException, IOException {
         log("********************************************************");
-        log("Hi my friends, here the downloaded movies handler. enjoy");
+        log("Hi my friends, here the downloaded movies and series handler. enjoy");
         configFileLoader = new ConfigFileLoader();
         actionHandler = new EnumMap<>(ActionType.class);
         actionHandler.put(ActionType.SONARR_GRAB, new SonarGrabbedDownloadsHandler(configFileLoader));
@@ -41,7 +41,7 @@ public class DownloadedItemsHandler {
             actionHandler.get(ActionType.RADARR_FAILED).handle();
             actionHandler.get(ActionType.SONARR_FAILED).handle();
         }
-        actionHandler.get(ActionType.SONARR_GRAB).handle();
+        //actionHandler.get(ActionType.SONARR_GRAB).handle();
         actionHandler.get(ActionType.RADARR_GRAB).handle();
         logWithDate("that's all, folks");
     }

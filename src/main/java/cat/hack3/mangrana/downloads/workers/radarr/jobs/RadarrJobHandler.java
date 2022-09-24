@@ -2,6 +2,7 @@ package cat.hack3.mangrana.downloads.workers.radarr.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
+import cat.hack3.mangrana.downloads.workers.common.ElementHandler;
 import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
 import cat.hack3.mangrana.downloads.workers.common.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
@@ -24,7 +25,7 @@ public class RadarrJobHandler extends JobHandler {
 
     final int radarrWaitInterval;
     RadarrApiGateway radarrApiGateway;
-    private int serieId;
+    private int movieId;
 
     public RadarrJobHandler(ConfigFileLoader configFileLoader, RadarrJobFile radarrJobFile, JobOrchestrator caller) throws IOException {
         super(configFileLoader, radarrJobFile, caller);
@@ -42,8 +43,13 @@ public class RadarrJobHandler extends JobHandler {
         jobTitle = fullTitle.substring(0, 45)+"..";
         logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_DOWNLOAD_ID);
-        serieId = Integer.parseInt(jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_MOVIE_ID));
+        movieId = Integer.parseInt(jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_MOVIE_ID));
         fileName = jobFile.getInfo(RadarrJobFile.GrabInfo.JAVA_FILENAME);
+    }
+
+    @Override
+    protected ElementHandler getInitiatedHandler() throws IOException {
+        return new MovieHandler(logger, configFileLoader).initValues(elementName, movieId);
     }
 
     protected void retrieveFileNameFromArrApp() throws TooMuchTriesException {
@@ -72,7 +78,7 @@ public class RadarrJobHandler extends JobHandler {
 
     protected void handleElement() throws IOException, NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException {
             new MovieHandler(logger, configFileLoader)
-                    .initValues(elementName, serieId)
+                    .initValues(elementName, movieId)
                     .handle();
     }
 
