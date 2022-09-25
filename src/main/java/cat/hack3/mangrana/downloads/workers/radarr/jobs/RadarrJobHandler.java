@@ -48,7 +48,7 @@ public class RadarrJobHandler extends JobHandler {
     }
 
     @Override
-    protected ElementHandler getInitiatedHandler() throws IOException {
+    protected ElementHandler getElementHandler() throws IOException {
         return new MovieHandler(logger, configFileLoader).initValues(elementName, movieId);
     }
 

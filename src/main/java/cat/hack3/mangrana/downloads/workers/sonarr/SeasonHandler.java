@@ -50,7 +50,7 @@ public class SeasonHandler extends SonarrElementHandler {
             copyService.setRetryEngine(retryer);
         }
 
-        SonarrSerie serie = sonarrApiGateway.getSerieById(serieId);
+        SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
         String seasonFolderName = getSeasonFolderNameFromSeason(elementName);
         copyService.copySeasonFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);

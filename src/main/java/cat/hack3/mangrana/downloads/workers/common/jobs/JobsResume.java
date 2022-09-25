@@ -1,5 +1,7 @@
 package cat.hack3.mangrana.downloads.workers.common.jobs;
 
+import cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager.JobFileType;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -18,16 +20,18 @@ public class JobsResume {
     }
 
     private static class JobInfo {
+        JobFileType jobType;
         String title;
         String state;
         LocalDateTime updateTime;
-        public JobInfo(String title, String state, LocalDateTime updateTime) {
+        public JobInfo(JobFileType jobType, String title, String state, LocalDateTime updateTime) {
+            this.jobType = jobType;
             this.title = title;
             this.state = state;
             this.updateTime = updateTime;
         }
         public JobInfo(JobInfo toClone) {
-            this(toClone.title, toClone.state, toClone.updateTime);
+            this(toClone.jobType, toClone.title, toClone.state, toClone.updateTime);
         }
         public LocalDateTime getUpdateTime() {
             return updateTime;
@@ -51,19 +55,18 @@ public class JobsResume {
         }
     }
 
-    public void put(String jobTitle, String state) {
+    public void put(JobFileType jobType, String jobTitle, String state) {
         LocalDateTime now = LocalDateTime.now();
         if (indexedJobsInfo.containsKey(jobTitle)) {
             JobInfo jobInfo = indexedJobsInfo.get(jobTitle);
             jobInfo.setState(state);
             jobInfo.setUpdateTime(now);
         } else {
-            JobInfo jobInfo = new JobInfo(jobTitle, state, now);
+            JobInfo jobInfo = new JobInfo(jobType, jobTitle, state, now);
             indexedJobsInfo.put(jobTitle, jobInfo);
             jobsState.add(jobInfo);
         }
     }
-
 
     public void resumeJobsLogPrint() {
         if (reportDelayCounter > 10 && !sameResumeAlreadyPrinted()) {
@@ -72,8 +75,8 @@ public class JobsResume {
                     .stream()
                     .sorted(Comparator.comparing(JobInfo::getUpdateTime))
                     .forEach(job ->
-                        log("* Job: {0} | current state: {1} | updated: {2}",
-                                job.title, job.state, job.updateTime.format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)))
+                            log("* Type: {3} | Job: {0} | current state: {1} | updated: {2}",
+                                    job.title, job.state, job.updateTime.format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)), job.jobType.getFolderName())
                     );
             reportDelayCounter = 0;
             logWithDate("**** JOBS RESUME ****");

@@ -42,7 +42,7 @@ public class RemoteCopyService {
         File destinationFolder = getOrCreateMovieFolderByPath(destinationFullPath);
         googleDriveApiGateway.copyFile(downloadedFile.getId(), destinationFolder.getId());
         logger.nLog("Movie file <{0}> has been successfully copied to <{1}> ( GDrive id: {2} )",
-                downloadedFile, destinationFullPath, destinationFolder.getId());
+                downloadedFileName, destinationFullPath, destinationFolder.getId());
     }
 
     private File getOrCreateMovieFolderByPath(String destinationFullPath) throws IOException, NoElementFoundException {

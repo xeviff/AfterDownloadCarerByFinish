@@ -9,8 +9,6 @@ import java.io.IOException;
 
 public abstract class SonarrElementHandler extends ElementHandler {
 
-    protected int serieId;
-
     protected final SerieRefresher serieRefresher;
     protected final SonarrApiGateway sonarrApiGateway;
 

@@ -3,7 +3,10 @@ package cat.hack3.mangrana.downloads.workers.common.jobs;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.downloads.workers.common.ElementHandler;
 import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
+import cat.hack3.mangrana.downloads.workers.radarr.jobs.RadarrJobHandler;
+import cat.hack3.mangrana.downloads.workers.sonarr.SonarrElementHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
+import cat.hack3.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
@@ -17,6 +20,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 public abstract class JobHandler implements Runnable {
 
@@ -24,17 +28,20 @@ public abstract class JobHandler implements Runnable {
 
     protected ConfigFileLoader configFileLoader;
     protected RemoteCopyService copyService;
+
     @SuppressWarnings("rawtypes")
     protected JobFile jobFile;
 
     protected String jobTitle="-not_set-";
+
     final JobOrchestrator orchestrator;
 
     protected String fullTitle;
+
     protected String elementName;
     protected String fileName;
-    protected String downloadId;
 
+    protected String downloadId;
     @SuppressWarnings("rawtypes")
     protected JobHandler(ConfigFileLoader configFileLoader, JobFile jobFile, JobOrchestrator caller) throws IOException {
         this.configFileLoader = configFileLoader;
@@ -42,9 +49,7 @@ public abstract class JobHandler implements Runnable {
         this.jobFile = jobFile;
         orchestrator = caller;
     }
-
     protected abstract void loadInfoFromJobFile();
-    protected abstract ElementHandler getInitiatedHandler() throws IOException;
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
         loadInfoFromJobFile();
         if (StringUtils.isEmpty(fileName)) {
@@ -52,7 +57,7 @@ public abstract class JobHandler implements Runnable {
         } else {
             elementName = fileName;
             logger.nLog("going to try handle the following element: "+elementName);
-            getInitiatedHandler().crashHandle();
+            getElementHandler().crashHandle();
             jobFile.forceMarkDone();
         }
     }
@@ -72,7 +77,7 @@ public abstract class JobHandler implements Runnable {
                 writeElementNameToJobInfo(elementName);
             }
             setJobStateWorkingOrSleep();
-            handleElement();
+            getElementHandler().handle();
             jobFile.markDone();
         } catch (TooMuchTriesException | IOException | IncorrectWorkingReferencesException | NoElementFoundException e) {
             error=true;
@@ -83,8 +88,7 @@ public abstract class JobHandler implements Runnable {
             setJobStateFinished(error);
         }
     }
-
-    protected abstract void handleElement() throws IOException, NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException;
+    protected abstract ElementHandler getElementHandler() throws IOException;
 
     protected abstract void retrieveFileNameFromArrApp() throws TooMuchTriesException;
 
@@ -98,7 +102,7 @@ public abstract class JobHandler implements Runnable {
 
     private void setJobStateWorkingOrSleep() {
         synchronized (orchestrator) {
-            orchestrator.jobHasFileName(jobTitle);
+            orchestrator.jobHasFileName(this);
             if (orchestrator.isWorkingWithAJob()) {
                 try {
                     Instant beforeWait = Instant.now();
@@ -116,22 +120,22 @@ public abstract class JobHandler implements Runnable {
                 }
             }
             jobFile.markDoing();
-            orchestrator.jobWorking(jobTitle);
+            orchestrator.jobWorking(this);
         }
     }
 
     private void setJobStateInitiated() {
         synchronized (orchestrator) {
-            orchestrator.jobInitiated(jobTitle);
+            orchestrator.jobInitiated(this);
         }
     }
 
     private void setJobStateFinished(boolean error) {
         synchronized (orchestrator) {
             if (error) {
-                orchestrator.jobError(jobTitle, fileName);
+                orchestrator.jobError(this);
             } else {
-                orchestrator.jobFinished(jobTitle, fileName);
+                orchestrator.jobFinished(this);
             }
             orchestrator.notifyAll();
         }
@@ -139,7 +143,7 @@ public abstract class JobHandler implements Runnable {
 
     protected void logWhenActive(String msg, Object... params){
         if (!orchestrator.isWorkingWithAJob()
-                || orchestrator.isJobWorking(jobTitle)) {
+                || orchestrator.isJobWorking(this)) {
             logger.nLog(msg, params);
         }
     }
@@ -147,4 +151,35 @@ public abstract class JobHandler implements Runnable {
     public String getFullTitle() {
         return fullTitle;
     }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public JobFile getJobFile() {
+        return jobFile;
+    }
+
+    public JobFileManager.JobFileType getJobType() {
+        if (this instanceof RadarrJobHandler)
+            return JobFileManager.JobFileType.RADARR_JOBS;
+        else if (this instanceof SonarrJobHandler)
+            return JobFileManager.JobFileType.SONARR_JOBS;
+        else return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JobHandler that = (JobHandler) o;
+        return Objects.equals(fullTitle, that.fullTitle);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fullTitle, downloadId);
+    }
+
 }

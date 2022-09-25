@@ -1,19 +1,22 @@
 package cat.hack3.mangrana.downloads.workers.common;
 
+import cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager;
+import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
+
 public interface JobOrchestrator {
 
-    public boolean isWorkingWithAJob();
+    boolean isWorkingWithAJob();
 
-    public boolean isJobWorking(String jobTitle);
+    boolean isJobWorking(JobHandler job);
 
-    public void jobInitiated(String jobTitle);
+    void jobInitiated(JobHandler job);
 
-    public void jobHasFileName(String jobTitle);
+    void jobHasFileName(JobHandler job);
 
-    public void jobWorking(String jobTitle);
+    void jobWorking(JobHandler job);
 
-    public void jobFinished(String jobTitle, String fileName);
+    void jobFinished(JobHandler job);
 
-    public void jobError(String jobTitle, String fileName);
+    void jobError(JobHandler job);
 
 }

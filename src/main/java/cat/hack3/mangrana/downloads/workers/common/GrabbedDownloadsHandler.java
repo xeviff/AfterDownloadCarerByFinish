@@ -6,11 +6,12 @@ import cat.hack3.mangrana.downloads.workers.common.jobs.JobFile;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobsResume;
+import cat.hack3.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
+import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.utils.EasyLogger;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,48 +27,45 @@ import static cat.hack3.mangrana.utils.Output.log;
 import static cat.hack3.mangrana.utils.Waiter.waitMinutes;
 import static cat.hack3.mangrana.utils.Waiter.waitSeconds;
 
-public abstract class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
+public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
 
     private final EasyLogger logger;
 
     ConfigFileLoader configFileLoader;
 
     JobsResume jobsState = new JobsResume();
-    Set<String> handlingFiles = new HashSet<>();
-    String jobCurrentlyInWork;
-    protected JobFileManager.JobFileType jobFileType;
+    Set<String> handlingJobs = new HashSet<>();
+    JobHandler jobCurrentlyInWork;
 
-    protected GrabbedDownloadsHandler(ConfigFileLoader configFileLoader) throws IOException {
+    RadarGrabbedDownloadsHandler radarHandler = new RadarGrabbedDownloadsHandler();
+    SonarGrabbedDownloadsHandler sonarrHandler = new SonarGrabbedDownloadsHandler();
+
+    public GrabbedDownloadsHandler(ConfigFileLoader configFileLoader) {
         this.logger = new EasyLogger("ORCHESTRATOR");
         this.configFileLoader = configFileLoader;
     }
 
     @Override
     public void handle() {
-        moveUncompletedJobsToRetry(jobFileType);
+        if (!LocalEnvironmentManager.isLocal()) {
+            moveUncompletedJobsToRetry(radarHandler.getJobFileType());
+            moveUncompletedJobsToRetry(sonarrHandler.getJobFileType());
+        }
         handleJobsReadyToCopy();
         handleRestOfJobs();
     }
 
     private void handleJobsReadyToCopy() {
-        log(">>>> in first place, going to try to copy those {0} elements that are already downloaded <<<<", jobFileType.getFolderName());
-        List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), jobFileType);
-        if (!jobFiles.isEmpty()) {
-            for (File jobFile : jobFiles) {
-                JobHandler job = null;
+        log(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
+        List<JobHandler> jobs = resolveJobHandlers(radarHandler);
+        jobs.addAll(resolveJobHandlers(sonarrHandler));
+        if (!jobs.isEmpty()) {
+            for (JobHandler job : jobs) {
                 try {
-                    @SuppressWarnings("rawtypes")
-                    JobFile jobFileManager = getJobFile(jobFile);
-                    if (jobFileManager.hasNoInfo()) {
-                        throw new IncorrectWorkingReferencesException("no valid info at file");
-                    }
-                    job = getJobHandler(configFileLoader, jobFileManager, this);
                     job.tryToMoveIfPossible();
                 } catch (IOException | IncorrectWorkingReferencesException | NoSuchElementException |
                          NoElementFoundException | TooMuchTriesException e) {
-                    String identifier = jobFile.getAbsolutePath();
-                    if (Objects.nonNull(job) && StringUtils.isNotEmpty(job.getFullTitle()))
-                        identifier = job.getFullTitle();
+                        String identifier = job.getFullTitle();
                     log("not going to work now with " + identifier);
                 }
             }
@@ -77,18 +75,36 @@ public abstract class GrabbedDownloadsHandler implements Handler, JobOrchestrato
         if (!LocalEnvironmentManager.isLocal()) waitMinutes(1);
     }
 
-    @SuppressWarnings("rawtypes")
-    protected abstract JobFile getJobFile(File jobFile) throws IncorrectWorkingReferencesException;
-    @SuppressWarnings("rawtypes")
-    protected abstract JobHandler getJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException;
+    private List<JobHandler> resolveJobHandlers (AppGrabbedDownloadsHandler downloadsHandler) {
+        List<JobHandler> jobs = new ArrayList<>();
+        List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), downloadsHandler.getJobFileType());
+        if (!jobFiles.isEmpty()) {
+            for (File jobFile : jobFiles) {
+                try {
+                    @SuppressWarnings("rawtypes")
+                    JobFile jobFileManager = downloadsHandler.provideJobFile(jobFile);
+                    if (jobFileManager.hasNoInfo()) {
+                        throw new IncorrectWorkingReferencesException("no valid info at file");
+                    }
+                    JobHandler job = downloadsHandler.provideJobHandler(configFileLoader, jobFileManager, this);
+                    jobs.add(job);
+                } catch (IOException | IncorrectWorkingReferencesException  e) {
+                    String identifier = jobFile.getAbsolutePath();
+                    log("could not get the job from file " + identifier);
+                }
+            }
+        }
+        return jobs;
+    }
 
     private void handleRestOfJobs() {
         boolean keepLooping = true;
         while (keepLooping) {
-            List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), jobFileType);
-            if (!jobFiles.isEmpty()) {
-                ExecutorService executor = Executors.newFixedThreadPool(jobFiles.size());
-                handleJobsInParallel(jobFiles, executor);
+            List<JobHandler> jobs = resolveJobHandlers(radarHandler);
+            jobs.addAll(resolveJobHandlers(sonarrHandler));
+            if (!jobs.isEmpty()) {
+                ExecutorService executor = Executors.newFixedThreadPool(jobs.size());
+                handleJobsInParallel(jobs, executor);
             }
             jobsState.resumeJobsLogPrint();
             waitMinutes(5);
@@ -96,28 +112,18 @@ public abstract class GrabbedDownloadsHandler implements Handler, JobOrchestrato
         }
     }
 
-    private void handleJobsInParallel(List<File> jobFiles, ExecutorService executor) {
+    private void handleJobsInParallel(List<JobHandler> jobHandlers, ExecutorService executor) {
         long filesIncorporated = 0;
         long filesIgnored = 0;
-        for (File jobFile : jobFiles) {
-            if (handlingFiles.contains(jobFile.getName())) {
+        for (JobHandler jobHandler : jobHandlers) {
+            if (handlingJobs.contains(getFileNameFromJob(jobHandler))) {
                 filesIgnored++;
                 continue;
             }
-            try {
-                @SuppressWarnings("rawtypes")
-                JobFile jobFileManager = getJobFile(jobFile);
-                if (jobFileManager.hasNoInfo()) {
-                    throw new IncorrectWorkingReferencesException("no valid info at file");
-                }
-                JobHandler job = getJobHandler(configFileLoader, jobFileManager, this);
-                executor.execute(job);
-                handlingFiles.add(jobFile.getName());
-                filesIncorporated++;
-                waitSeconds(5);
-            } catch (IOException | IncorrectWorkingReferencesException e) {
-                logger.nLogD("not going to work with " + jobFile.getAbsolutePath());
-            }
+            executor.execute(jobHandler);
+            handlingJobs.add(getFileNameFromJob(jobHandler));
+            filesIncorporated++;
+            waitSeconds(5);
         }
         if (filesIncorporated > 0) {
             logger.nLogD("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
@@ -134,36 +140,40 @@ public abstract class GrabbedDownloadsHandler implements Handler, JobOrchestrato
         return jobCurrentlyInWork!=null;
     }
 
-    public boolean isJobWorking(String jobTitle) {
-        return jobTitle.equals(jobCurrentlyInWork);
+    public boolean isJobWorking(JobHandler job) {
+        return job.equals(jobCurrentlyInWork);
     }
 
-    public void jobInitiated(String jobTitle) {
-        jobsState.put(jobTitle, "initiated");
+    public void jobInitiated(JobHandler job) {
+        jobsState.put(job.getJobType(), job.getJobTitle(), "initiated");
     }
 
-    public void jobHasFileName(String jobTitle) {
-        jobsState.put(jobTitle, "has filename");
+    public void jobHasFileName(JobHandler job) {
+        jobsState.put(job.getJobType(), job.getJobTitle(), "has filename");
     }
 
-    public void jobWorking(String jobTitle) {
-        logger.nLog("WORKING WITH "+jobTitle);
-        jobsState.put(jobTitle, "working");
-        jobCurrentlyInWork=jobTitle;
+    public void jobWorking(JobHandler job) {
+        logger.nLog("WORKING WITH "+job.getFullTitle());
+        jobsState.put(job.getJobType(), job.getJobTitle(), "working");
+        jobCurrentlyInWork=job;
     }
 
-    public void jobFinished(String jobTitle, String fileName) {
-        logger.nLog("NOT WORKING ANYMORE WITH "+jobTitle);
-        jobsState.put(jobTitle, "finished");
-        handlingFiles.remove(fileName);
+    public void jobFinished(JobHandler job) {
+        logger.nLog("NOT WORKING ANYMORE WITH "+job.getFullTitle());
+        jobsState.put(job.getJobType(), job.getJobTitle(), "finished");
+        handlingJobs.remove(getFileNameFromJob(job));
         jobCurrentlyInWork=null;
     }
 
-    public void jobError(String jobTitle, String fileName) {
-        logger.nLog("NOT WORKING ANYMORE WITH "+jobTitle);
-        jobsState.put(jobTitle, "error");
-        handlingFiles.remove(fileName);
+    public void jobError(JobHandler job) {
+        logger.nLog("NOT WORKING ANYMORE WITH "+job.getFullTitle());
+        jobsState.put(job.getJobType(), job.getJobTitle(), "error");
+        handlingJobs.remove(getFileNameFromJob(job));
         jobCurrentlyInWork=null;
+    }
+
+    private String getFileNameFromJob(JobHandler job) {
+        return job.getJobFile().getFile().getName();
     }
 
 }

@@ -2,14 +2,13 @@ package cat.hack3.mangrana.downloads.workers.sonarr.jobs;
 
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
-import cat.hack3.mangrana.downloads.workers.common.ElementHandler;
 import cat.hack3.mangrana.downloads.workers.common.JobOrchestrator;
 import cat.hack3.mangrana.downloads.workers.common.RetryEngine;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.EpisodeHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SeasonHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SerieRefresher;
-import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
+import cat.hack3.mangrana.downloads.workers.sonarr.SonarrElementHandler;
 import cat.hack3.mangrana.exception.NoElementFoundException;
 import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
@@ -57,11 +56,6 @@ public class SonarrJobHandler extends JobHandler {
         fileName = jobFile.getInfo(SonarrJobFile.GrabInfo.JAVA_FILENAME);
     }
 
-    @Override
-    protected ElementHandler getInitiatedHandler() throws IOException {
-        return new EpisodeHandler(logger, configFileLoader).initValues(elementName, serieId);
-    }
-
     protected void retrieveFileNameFromArrApp() throws TooMuchTriesException {
         Supplier<String> getOutputFromQueue = () -> {
             logWhenActive("searching from Sonarr Queue downloadId="+downloadId);
@@ -86,16 +80,17 @@ public class SonarrJobHandler extends JobHandler {
         elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
     }
 
-    protected void handleElement() throws IOException, NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException {
+    protected SonarrElementHandler getElementHandler() throws IOException {
+        SonarrElementHandler elementHandler;
         if (EPISODE.equals(type)) {
-            new EpisodeHandler(logger, configFileLoader)
-                    .initValues(elementName, serieId)
-                    .handle();
+            elementHandler = (SonarrElementHandler)
+                    new EpisodeHandler(logger, configFileLoader)
+                    .initValues(elementName, serieId);
         } else {
-            new SeasonHandler(logger, configFileLoader)
-                    .initValues(elementName, serieId, episodeCount)
-                    .handle();
+            elementHandler = new SeasonHandler(logger, configFileLoader)
+                    .initValues(elementName, serieId, episodeCount);
         }
+        return elementHandler;
     }
 
 }
