@@ -14,7 +14,7 @@ public abstract class JobFile<E> {
         PATH_DOING("doing"),
         PATH_DONE("done");
         private final String folderName;
-        private static final String LOCAL_PATH_TODO = "local_test";
+        private static final String LOCAL_WORKING_PATH = "local_test";
         JobLocation(String folderName) {
             this.folderName=folderName;
         }
@@ -23,8 +23,8 @@ public abstract class JobFile<E> {
         }
         private String getLocalNameIfNecessary(JobLocation location) {
             if (LocalEnvironmentManager.isLocal()
-                    && location.equals(JobLocation.PATH_TODO)) {
-                return LOCAL_PATH_TODO;
+                    && (location.equals(JobLocation.PATH_TODO) || location.equals(JobLocation.PATH_DOING))) {
+                return LOCAL_WORKING_PATH;
             }
             return location.folderName;
         }
@@ -46,7 +46,7 @@ public abstract class JobFile<E> {
 
 
     public void markDoing() {
-        if (jobFile.getAbsolutePath().contains(PATH_TODO.folderName)) {
+        if (jobFile.getAbsolutePath().contains(PATH_TODO.getFolderName())) {
             jobFile = shiftFileFolder(jobFile, PATH_TODO, PATH_DOING);
         }
     }
@@ -56,15 +56,15 @@ public abstract class JobFile<E> {
     }
 
     public void forceMarkDone() {
-        if (jobFile.getAbsolutePath().contains(PATH_DOING.folderName)) {
+        if (jobFile.getAbsolutePath().contains(PATH_DOING.getFolderName())) {
             jobFile = shiftFileFolder(jobFile, PATH_DOING, PATH_DONE);
-        } else if (jobFile.getAbsolutePath().contains(PATH_TODO.folderName)) {
+        } else if (jobFile.getAbsolutePath().contains(PATH_TODO.getFolderName())) {
             jobFile = shiftFileFolder(jobFile, PATH_TODO, PATH_DONE);
         }
     }
 
     public void driveBack() {
-        if (jobFile.getAbsolutePath().contains(PATH_DOING.folderName)) {
+        if (jobFile.getAbsolutePath().contains(PATH_DOING.getFolderName())) {
             jobFile = shiftFileFolder(jobFile, PATH_DOING, PATH_TODO);
         }
     }

@@ -33,7 +33,7 @@ public class MovieHandler extends ElementHandler {
         if (!initiated) throw new CircuitBreakingException("initValues method execution is needed first");
         if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(
                 "MovieOnGoogle",
-                googleWaitInterval /2,
+                googleWaitInterval,
                 this::log)
         );
         MovieResource movie = radarrApiGateway.getMovieById(appElementId);
