@@ -54,8 +54,9 @@ public class PlexCommandLauncher {
                     .addParameter("X-Plex-Token", config.getConfig(PLEX_TOKEN))
                     .build();
             httpclient.execute(httpGET);
+            @SuppressWarnings("unused")
             String urlWithTokenHidden = httpGET.getURI().toString().replaceFirst(config.getConfig(PLEX_TOKEN), "__plex_token__");
-            logger.nLog("Launched URL command: {0}",  urlWithTokenHidden);
+            logger.nLog("Launched URL command: {0}",  httpGET.getURI().toString());
         } catch (Exception e) {
             logger.nHLog("Some error has happened using the URL <{0}>", plexRefreshURL);
             e.printStackTrace();
