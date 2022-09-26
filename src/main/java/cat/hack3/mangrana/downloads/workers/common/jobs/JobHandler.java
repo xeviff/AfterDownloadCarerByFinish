@@ -48,10 +48,10 @@ public abstract class JobHandler implements Runnable {
         copyService = new RemoteCopyService(configFileLoader);
         this.jobFile = jobFile;
         orchestrator = caller;
+        loadInfoFromJobFile();
     }
     protected abstract void loadInfoFromJobFile();
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
-        loadInfoFromJobFile();
         if (StringUtils.isEmpty(fileName)) {
             logger.nLog("this job has not a fileName retrieved, so it cannot be processed.");
         } else {
@@ -66,7 +66,6 @@ public abstract class JobHandler implements Runnable {
     public void run() {
         boolean error=false;
         try {
-            loadInfoFromJobFile();
             logger.nLog("going to handle the so called <{0}>", fullTitle);
             setJobStateInitiated();
             if (StringUtils.isNotEmpty(fileName)) {
@@ -167,19 +166,6 @@ public abstract class JobHandler implements Runnable {
         else if (this instanceof SonarrJobHandler)
             return JobFileManager.JobFileType.SONARR_JOBS;
         else return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        JobHandler that = (JobHandler) o;
-        return Objects.equals(fullTitle, that.fullTitle);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(fullTitle, downloadId);
     }
 
 }

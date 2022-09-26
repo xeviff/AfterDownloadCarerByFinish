@@ -3,7 +3,6 @@ package cat.hack3.mangrana.downloads.workers.common;
 import cat.hack3.mangrana.config.ConfigFileLoader;
 import cat.hack3.mangrana.config.LocalEnvironmentManager;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobFile;
-import cat.hack3.mangrana.downloads.workers.common.jobs.JobFileManager;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobHandler;
 import cat.hack3.mangrana.downloads.workers.common.jobs.JobsResume;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
@@ -72,14 +71,19 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
         }
         log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
         log("-------------------------------------------------------------------------------------------------------------------");
-        if (!LocalEnvironmentManager.isLocal()) waitMinutes(1);
     }
 
     private List<JobHandler> resolveJobHandlers (AppGrabbedDownloadsHandler downloadsHandler) {
+        long filesIncorporated = 0;
+        long filesIgnored = 0;
         List<JobHandler> jobs = new ArrayList<>();
         List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), downloadsHandler.getJobFileType());
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
+                if (handlingJobs.contains(jobFile.getName())) {
+                    filesIgnored++;
+                    continue;
+                }
                 try {
                     @SuppressWarnings("rawtypes")
                     JobFile jobFileManager = downloadsHandler.provideJobFile(jobFile);
@@ -88,9 +92,19 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
                     }
                     JobHandler job = downloadsHandler.provideJobHandler(configFileLoader, jobFileManager, this);
                     jobs.add(job);
+                    filesIncorporated++;
                 } catch (IOException | IncorrectWorkingReferencesException  e) {
                     String identifier = jobFile.getAbsolutePath();
                     log("could not get the job from file " + identifier);
+                }
+            }
+            if (filesIncorporated > 0) {
+                logger.nLogD("Resolved {2} jobs for handling loop: filesIncorporated={0}, filesIgnored={1}",
+                        filesIncorporated, filesIgnored, downloadsHandler.getJobFileType().getFolderName());
+                try {
+                    configFileLoader.refresh();
+                } catch (IncorrectWorkingReferencesException e) {
+                    logger.nHLog("couldn't refresh the values from the project config file");
                 }
             }
         }
@@ -113,26 +127,10 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
     }
 
     private void handleJobsInParallel(List<JobHandler> jobHandlers, ExecutorService executor) {
-        long filesIncorporated = 0;
-        long filesIgnored = 0;
         for (JobHandler jobHandler : jobHandlers) {
-            if (handlingJobs.contains(getFileNameFromJob(jobHandler))) {
-                filesIgnored++;
-                continue;
-            }
             executor.execute(jobHandler);
             handlingJobs.add(getFileNameFromJob(jobHandler));
-            filesIncorporated++;
             waitSeconds(5);
-        }
-        if (filesIncorporated > 0) {
-            logger.nLogD("handled jobs loop resume: filesIncorporated={0}, filesIgnored={1}",
-                    filesIncorporated, filesIgnored);
-            try {
-                configFileLoader.refresh();
-            } catch (IncorrectWorkingReferencesException e) {
-                logger.nHLog("couldn't refresh the values from the project config file");
-            }
         }
     }
 
