@@ -100,7 +100,7 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
             }
             if (filesIncorporated > 0) {
                 logger.nLogD("Resolved {2} jobs for handling loop: filesIncorporated={0}, filesIgnored={1}",
-                        filesIncorporated, filesIgnored, downloadsHandler.getJobFileType().getFolderName());
+                        filesIncorporated, filesIgnored, downloadsHandler.getJobFileType().getFolderName().toUpperCase());
                 try {
                     configFileLoader.refresh();
                 } catch (IncorrectWorkingReferencesException e) {

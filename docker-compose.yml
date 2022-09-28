@@ -3,8 +3,7 @@ version: "2.1"
 services:
   after-download-carer:
     container_name: mangrana_java_after_download
-    image: after-download-carer:latest
-    build: .
+    image: xeviff/after-download-carer:latest
     volumes:
       - ./config:/config
       - ./tokens:/tokens

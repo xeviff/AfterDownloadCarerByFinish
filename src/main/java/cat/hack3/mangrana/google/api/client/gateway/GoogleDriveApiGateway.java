@@ -50,8 +50,8 @@ public class GoogleDriveApiGateway {
 
         if (CollectionUtils.isNotEmpty(files)) {
             if (files.size() > 1) {
-                log("ups, there are more than one matching element. it's better to take a look :S ");
-                files.forEach(fl -> log(fl.toString()));
+                log("WARN: There are more than one matching element!!!");
+                files.forEach(fl -> log("> element with name {0} an id {1}", fl.getName(), fl.getId()));
             }
             return files.get(0);
         } else {

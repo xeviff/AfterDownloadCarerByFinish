@@ -21,8 +21,9 @@ public class DownloadedItemsHandler {
     ConfigFileLoader configFileLoader;
 
     private DownloadedItemsHandler() throws IncorrectWorkingReferencesException, IOException {
-        log("********************************************************");
-        log("Hi my friends, here the downloaded movies and series handler. enjoy");
+        log("************************************************************************************************");
+        log("********* Hi my friends, here the downloaded movies and series handler. enjoy ******************");
+        log("************************************************************************************************");
         configFileLoader = new ConfigFileLoader();
         actionHandler = new EnumMap<>(ActionType.class);
         actionHandler.put(ActionType.SONARR_FAILED, new SonarrFailedDownloadsHandler(configFileLoader));
