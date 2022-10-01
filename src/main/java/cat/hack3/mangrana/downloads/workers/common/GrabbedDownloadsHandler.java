@@ -8,13 +8,14 @@ import cat.hack3.mangrana.downloads.workers.common.jobs.JobsResume;
 import cat.hack3.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import cat.hack3.mangrana.exception.IncorrectWorkingReferencesException;
-import cat.hack3.mangrana.exception.NoElementFoundException;
-import cat.hack3.mangrana.exception.TooMuchTriesException;
 import cat.hack3.mangrana.utils.EasyLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -62,8 +63,7 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
             for (JobHandler job : jobs) {
                 try {
                     job.tryToMoveIfPossible();
-                } catch (IOException | IncorrectWorkingReferencesException | NoSuchElementException |
-                         NoElementFoundException | TooMuchTriesException e) {
+                } catch (Exception e) {
                         String identifier = job.getFullTitle();
                     log("not going to work now with " + identifier);
                 }

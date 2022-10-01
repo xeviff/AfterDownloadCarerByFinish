@@ -31,17 +31,14 @@ public abstract class JobHandler implements Runnable {
 
     @SuppressWarnings("rawtypes")
     protected JobFile jobFile;
-
-    protected String jobTitle="-not_set-";
-
     final JobOrchestrator orchestrator;
 
+    protected String jobTitle="-not_set-";
     protected String fullTitle;
-
     protected String elementName;
     protected String fileName;
-
     protected String downloadId;
+
     @SuppressWarnings("rawtypes")
     protected JobHandler(ConfigFileLoader configFileLoader, JobFile jobFile, JobOrchestrator caller) throws IOException {
         this.configFileLoader = configFileLoader;
@@ -56,7 +53,7 @@ public abstract class JobHandler implements Runnable {
             logger.nLog("this job has not a fileName retrieved, so it cannot be processed.");
         } else {
             elementName = fileName;
-            logger.nLog("going to try handle the following element: "+elementName);
+            logger.nLog("going to try handle the following element: "+downloadId);
             getElementHandler().crashHandle();
             jobFile.forceMarkDone();
         }

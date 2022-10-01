@@ -12,6 +12,7 @@ import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static cat.hack3.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_SERIES_FOLDER_ID;
@@ -51,6 +52,7 @@ public class SeasonHandler extends SonarrElementHandler {
         }
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
+        if (Objects.isNull(serie)) throw new NoElementFoundException(msg("Could not found serie with id {0} in Sonarr", String.valueOf(appElementId)));
         String seasonFolderName = getSeasonFolderNameFromSeason(elementName);
         copyService.copySeasonFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);

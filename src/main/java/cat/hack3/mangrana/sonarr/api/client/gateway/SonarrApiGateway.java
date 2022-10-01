@@ -5,6 +5,7 @@ import cat.hack3.mangrana.sonarr.api.schema.command.RefreshSerieCommand;
 import cat.hack3.mangrana.sonarr.api.schema.history.SonarrHistory;
 import cat.hack3.mangrana.sonarr.api.schema.queue.SonarrQueue;
 import cat.hack3.mangrana.sonarr.api.schema.series.SonarrSerie;
+import cat.hack3.mangrana.utils.EasyLogger;
 import cat.hack3.mangrana.utils.Output;
 import cat.hack3.mangrana.utils.rest.APIProxyBuilderSingleton;
 
@@ -15,10 +16,12 @@ public class SonarrApiGateway {
 
     private final String apiKey;
     private final SonarrAPIInterface proxy;
+    private final EasyLogger logger;
 
     public SonarrApiGateway(ConfigFileLoader config) {
         apiKey = config.getConfig(SONARR_API_KEY);
         proxy = APIProxyBuilderSingleton.getSonarrInterface(config.getConfig(SONARR_API_HOST));
+        logger = new EasyLogger();
     }
 
     public SonarrQueue getQueue() {
@@ -31,8 +34,13 @@ public class SonarrApiGateway {
     }
 
     public SonarrSerie getSerieById(Integer seriesId) {
-        SonarrSerie serie = proxy.getSerieById(seriesId, apiKey);
-        log("retrieved serie from sonarr with id "+seriesId);
+        SonarrSerie serie = null;
+        try {
+            serie = proxy.getSerieById(seriesId, apiKey);
+            logger.nLog("retrieved serie from sonarr with id "+seriesId);
+        } catch (Exception e) {
+            logger.nHLog("Error while getSerieById: {0}", e.getMessage());
+        }
         return serie;
     }
 
