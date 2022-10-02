@@ -73,7 +73,7 @@ public class RadarrJobHandler extends JobHandler {
                 "RadarrQueueRecord",
                 radarrWaitInterval,
                 this::logWhenActive);
-        elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
+        elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue, RetryEngine.TOO_MUCH_RETRIES_INFINITE_THRESHOLD);
     }
 
     protected void handleElement() throws IOException, NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException {

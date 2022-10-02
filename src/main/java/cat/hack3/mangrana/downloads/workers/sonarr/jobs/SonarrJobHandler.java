@@ -77,7 +77,7 @@ public class SonarrJobHandler extends JobHandler {
                 "SonarrQueueRecord",
                 sonarrWaitInterval,
                 this::logWhenActive);
-        elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue);
+        elementName = retryEngineForQueue.tryUntilGotDesired(getOutputFromQueue, RetryEngine.TOO_MUCH_RETRIES_INFINITE_THRESHOLD);
     }
 
     protected SonarrElementHandler getElementHandler() throws IOException {

@@ -28,6 +28,8 @@ public class RemoteCopyService {
     GoogleDriveApiGateway googleDriveApiGateway;
     RetryEngine<File> retryEngine;
 
+    private static final int TOO_MUCH_RETRIES_THRESHOLD = 40;
+
     public RemoteCopyService(ConfigFileLoader configFileLoader) throws IOException {
         this.logger = new EasyLogger("CopyService");
         this.configFileLoader = configFileLoader;
@@ -74,7 +76,7 @@ public class RemoteCopyService {
                 return null;
             }
         };
-        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? getDownloadedSeasonFolder.get() : retryEngine.tryUntilGotDesired(getDownloadedSeasonFolder);
+        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? getDownloadedSeasonFolder.get() : retryEngine.tryUntilGotDesired(getDownloadedSeasonFolder, TOO_MUCH_RETRIES_THRESHOLD);
         if (Objects.isNull(downloadedSeasonFolder))
             throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the downloaded folder "+ downloadedFolderName);
 
@@ -110,7 +112,7 @@ public class RemoteCopyService {
                 return null;
             }
         };
-        File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile);
+        File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile, TOO_MUCH_RETRIES_THRESHOLD);
         if (Objects.isNull(downloadedFile)) {
             throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+ downloadedFileName);
         }

@@ -20,8 +20,8 @@ public class RetryEngine<D> {
     private final int minutesToWait;
     private final ChildrenRequirements<D> childrenRequirements;
     private final Consumer<String> logger;
-    private static final int TOO_MUCH_RETRIES_THRESHOLD = 40;
     private static final int TOO_MUCH_RETRIES_CHILDREN_THRESHOLD = 10;
+    public static final int TOO_MUCH_RETRIES_INFINITE_THRESHOLD = 0;
 
     public static class ChildrenRequirements<D> {
         final int children;
@@ -45,7 +45,7 @@ public class RetryEngine<D> {
         this.logger = logger;
     }
 
-    public D tryUntilGotDesired(Supplier<D> tryToGet) throws TooMuchTriesException {
+    public D tryUntilGotDesired(Supplier<D> tryToGet, final int tooMuchTriesThreshold) throws TooMuchTriesException {
         AtomicInteger loopCount = new AtomicInteger(1);
         D desired = null;
         boolean waitForChildren = childrenRequirements.children > 0;
@@ -55,7 +55,7 @@ public class RetryEngine<D> {
                 waitLoopBehaviour(loopCount,
                         msg("The element was not found yet and will retry every {0} minutes - {1}", minutesToWait, getCurrentTime()),
                         "Too much tries when retrieving desired element",
-                        TOO_MUCH_RETRIES_THRESHOLD
+                        tooMuchTriesThreshold
                 );
             } else if (waitForChildren) {
                 childrenCheckingLoop(desired);
@@ -91,7 +91,8 @@ public class RetryEngine<D> {
     }
 
     private void waitLoopBehaviour(AtomicInteger loopCount, String noticeMessage, String overTriesMessage, final int tooMuchTriesThreshold) throws TooMuchTriesException {
-        if (loopCount.get() > tooMuchTriesThreshold) {
+        if (tooMuchTriesThreshold != TOO_MUCH_RETRIES_INFINITE_THRESHOLD
+                && loopCount.get() > tooMuchTriesThreshold) {
             throw new TooMuchTriesException(overTriesMessage);
         }
         if (loopCount.get()==1) log(noticeMessage);
