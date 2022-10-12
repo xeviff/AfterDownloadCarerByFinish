@@ -10,6 +10,7 @@ import tv.mangrana.utils.EasyLogger;
 import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_TEAM_DRIVE_ID;
 import static tv.mangrana.google.api.client.gateway.GoogleDriveApiGateway.GoogleElementType.VIDEO;
@@ -33,6 +34,7 @@ public class EpisodeHandler extends SonarrElementHandler {
                 this::log)
         );
         SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
+        if (Objects.isNull(serie)) return;
         String seasonFolderName = getSeasonFolderNameFromEpisode(elementName);
         copyService.copyEpisodeFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
