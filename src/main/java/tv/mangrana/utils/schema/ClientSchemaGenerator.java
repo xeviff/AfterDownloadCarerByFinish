@@ -27,9 +27,9 @@ public class ClientSchemaGenerator {
     @SuppressWarnings("unused")
     private void generateRadarrQueueClientSchema() throws  IOException {
         generate(
-                configFileLoader.getCommonConfig(RADARR_API_HOST),
+                configFileLoader.getConfig(RADARR_API_HOST),
                 "/api/v3/queue?includeMovie=true?apikey=",
-                configFileLoader.getCommonConfig(RADARR_API_KEY),
+                configFileLoader.getConfig(RADARR_API_KEY),
                 "tv.mangrana.radarr.api.schema.queue",
                 "QueueResourcePagingResource");
     }
@@ -37,9 +37,9 @@ public class ClientSchemaGenerator {
     @SuppressWarnings("unused")
     private void generateRadarrMovieClientSchema() throws  IOException {
         generate(
-                configFileLoader.getCommonConfig(RADARR_API_HOST),
+                configFileLoader.getConfig(RADARR_API_HOST),
                 "/api/v3/movie/9216?apikey=",
-                configFileLoader.getCommonConfig(RADARR_API_KEY),
+                configFileLoader.getConfig(RADARR_API_KEY),
                 "tv.mangrana.radarr.api.schema.movie",
                 "MovieResource");
     }
@@ -47,9 +47,9 @@ public class ClientSchemaGenerator {
     @SuppressWarnings("unused")
     private void generateSonarrQueueClientSchema() throws  IOException {
         generate(
-                configFileLoader.getCommonConfig(SONARR_API_HOST),
+                configFileLoader.getConfig(SONARR_API_HOST),
                 "/api/v3/queue?apikey=",
-                configFileLoader.getCommonConfig(SONARR_API_KEY),
+                configFileLoader.getConfig(SONARR_API_KEY),
                 "tv.mangrana.sonarr.api.schema.queue",
                 "SonarrQueue");
     }
@@ -57,9 +57,9 @@ public class ClientSchemaGenerator {
     @SuppressWarnings("unused")
     private void generateSonarrSeriesClientSchema() throws  IOException {
         generate(
-                configFileLoader.getCommonConfig(SONARR_API_HOST),
+                configFileLoader.getConfig(SONARR_API_HOST),
                 "/api/v3/series/2220?apikey=",
-                configFileLoader.getCommonConfig(SONARR_API_KEY),
+                configFileLoader.getConfig(SONARR_API_KEY),
                 "tv.mangrana.sonarr.api.schema.series",
                 "SonarrSeries");
     }
@@ -67,9 +67,9 @@ public class ClientSchemaGenerator {
     @SuppressWarnings("unused")
     private void generateSonarrHistoryClientSchema() throws  IOException {
         generate(
-                configFileLoader.getCommonConfig(SONARR_API_HOST),
+                configFileLoader.getConfig(SONARR_API_HOST),
                 "/api/v3/history?sortKey=date&apikey=",
-                configFileLoader.getCommonConfig(SONARR_API_KEY),
+                configFileLoader.getConfig(SONARR_API_KEY),
                 "tv.mangrana.sonarr.api.schema.history",
                 "SonarrHistory");
     }
