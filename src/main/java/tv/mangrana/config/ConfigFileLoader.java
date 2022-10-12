@@ -11,13 +11,9 @@ public class ConfigFileLoader extends CommonConfigFileLoader<ConfigFileLoader.Pr
     }
 
     public enum ProjectConfiguration {
-        MANAGE_FAILED_DOWNLOADS,
         IMMORTAL_PROCESS,
+        MANAGE_FAILED_DOWNLOADS,
         GRABBED_FILE_IDENTIFIER_REGEX,
-        RADARR_API_KEY,
-        RADARR_API_HOST,
-        SONARR_API_KEY,
-        SONARR_API_HOST,
         DOWNLOADS_TEAM_DRIVE_ID,
         DOWNLOADS_SERIES_FOLDER_ID,
         MOVIES_TEAM_DRIVE_ID,
