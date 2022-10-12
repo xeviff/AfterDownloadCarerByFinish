@@ -4,7 +4,6 @@ import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.downloads.workers.common.ElementHandler;
 import tv.mangrana.downloads.workers.common.JobOrchestrator;
 import tv.mangrana.downloads.workers.radarr.jobs.RadarrJobHandler;
-import tv.mangrana.downloads.workers.sonarr.SonarrElementHandler;
 import tv.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import tv.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Objects;
 
 public abstract class JobHandler implements Runnable {
 
