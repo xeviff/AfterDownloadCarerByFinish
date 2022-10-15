@@ -3,8 +3,6 @@ package tv.mangrana.downloads;
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.downloads.workers.common.GrabbedDownloadsHandler;
 import tv.mangrana.downloads.workers.common.Handler;
-import tv.mangrana.downloads.workers.radarr.RadarrFailedDownloadsHandler;
-import tv.mangrana.downloads.workers.sonarr.SonarrFailedDownloadsHandler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 
 import java.io.IOException;
@@ -26,8 +24,6 @@ public class DownloadedItemsHandler {
         log("************************************************************************************************");
         configFileLoader = new ConfigFileLoader();
         actionHandler = new EnumMap<>(ActionType.class);
-        actionHandler.put(ActionType.SONARR_FAILED, new SonarrFailedDownloadsHandler(configFileLoader));
-        actionHandler.put(ActionType.RADARR_FAILED, new RadarrFailedDownloadsHandler(configFileLoader));
         actionHandler.put(ActionType.DOWNLOADS_REMOTE_COPY, new GrabbedDownloadsHandler(configFileLoader));
     }
 

@@ -1,6 +1,6 @@
 package tv.mangrana.downloads.workers.sonarr.jobs;
 
-import tv.mangrana.downloads.workers.common.jobs.JobFile;
+import tv.mangrana.jobs.JobFile;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import tv.mangrana.utils.yml.FakeYmlLoader;
 

@@ -1,8 +1,8 @@
 package tv.mangrana.downloads.workers.common;
 
 import tv.mangrana.config.ConfigFileLoader;
-import tv.mangrana.downloads.workers.common.jobs.JobFile;
-import tv.mangrana.downloads.workers.common.jobs.JobFileManager;
+import tv.mangrana.jobs.JobFile;
+import tv.mangrana.jobs.JobFileManager;
 import tv.mangrana.downloads.workers.common.jobs.JobHandler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 

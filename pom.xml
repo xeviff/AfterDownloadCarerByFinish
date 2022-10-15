@@ -14,14 +14,6 @@
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>stil4m-releases</id>
-            <name>stil4m-releases</name>
-            <url>https://github.com/stil4m/maven-repository/raw/master/releases/</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <!-- most of logic -->
         <dependency>

@@ -2,6 +2,7 @@ package tv.mangrana.downloads.workers.common.jobs;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import tv.mangrana.jobs.JobFileManager;
 
 public class JobsResumeTest {
 

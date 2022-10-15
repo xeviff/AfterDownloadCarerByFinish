@@ -1,6 +1,5 @@
 package tv.mangrana.downloads.workers.common;
 
-import tv.mangrana.downloads.workers.common.jobs.JobFileManager;
 import tv.mangrana.downloads.workers.common.jobs.JobHandler;
 
 public interface JobOrchestrator {

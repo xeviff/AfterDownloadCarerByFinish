@@ -2,7 +2,7 @@ package tv.mangrana.downloads.workers.common;
 
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.config.LocalEnvironmentManager;
-import tv.mangrana.downloads.workers.common.jobs.JobFile;
+import tv.mangrana.jobs.JobFile;
 import tv.mangrana.downloads.workers.common.jobs.JobHandler;
 import tv.mangrana.downloads.workers.common.jobs.JobsResume;
 import tv.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
@@ -21,8 +21,8 @@ import java.util.concurrent.Executors;
 
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.IMMORTAL_PROCESS;
-import static tv.mangrana.downloads.workers.common.jobs.JobFileManager.moveUncompletedJobsToRetry;
-import static tv.mangrana.downloads.workers.common.jobs.JobFileManager.retrieveJobFiles;
+import static tv.mangrana.jobs.JobFileManager.moveUncompletedJobsToRetry;
+import static tv.mangrana.jobs.JobFileManager.retrieveJobFiles;
 import static tv.mangrana.utils.Output.log;
 import static tv.mangrana.utils.Waiter.waitMinutes;
 import static tv.mangrana.utils.Waiter.waitSeconds;

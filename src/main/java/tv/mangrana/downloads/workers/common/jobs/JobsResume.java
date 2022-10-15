@@ -1,6 +1,6 @@
 package tv.mangrana.downloads.workers.common.jobs;
 
-import tv.mangrana.downloads.workers.common.jobs.JobFileManager.JobFileType;
+import tv.mangrana.jobs.JobFileManager.JobFileType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

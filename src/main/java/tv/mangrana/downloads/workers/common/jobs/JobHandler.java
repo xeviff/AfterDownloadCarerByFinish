@@ -1,5 +1,6 @@
 package tv.mangrana.downloads.workers.common.jobs;
 
+import org.apache.commons.lang.StringUtils;
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.downloads.workers.common.ElementHandler;
 import tv.mangrana.downloads.workers.common.JobOrchestrator;
@@ -10,8 +11,9 @@ import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.exception.TooMuchTriesException;
 import tv.mangrana.google.api.client.RemoteCopyService;
+import tv.mangrana.jobs.JobFile;
+import tv.mangrana.jobs.JobFileManager;
 import tv.mangrana.utils.EasyLogger;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
