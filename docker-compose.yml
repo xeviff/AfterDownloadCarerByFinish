@@ -4,6 +4,7 @@ services:
   after-download-carer:
     container_name: mangrana_java_after_download
     image: xeviff/after-download-carer:latest
+    restart: unless-stopped
     volumes:
       - ./config:/config
       - ./tokens:/tokens

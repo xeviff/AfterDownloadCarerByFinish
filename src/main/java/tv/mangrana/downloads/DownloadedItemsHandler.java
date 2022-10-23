@@ -8,17 +8,17 @@ import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import java.io.IOException;
 import java.util.EnumMap;
 
-import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.MANAGE_FAILED_DOWNLOADS;
 import static tv.mangrana.utils.Output.log;
 import static tv.mangrana.utils.Output.logWithDate;
 
 public class DownloadedItemsHandler {
 
-    private enum ActionType {DOWNLOADS_REMOTE_COPY, SONARR_FAILED, RADARR_FAILED}
+    private enum ActionType {DOWNLOADS_REMOTE_COPY}
     private final EnumMap<ActionType, Handler> actionHandler;
     ConfigFileLoader configFileLoader;
 
-    private DownloadedItemsHandler() throws IncorrectWorkingReferencesException, IOException {
+    private DownloadedItemsHandler() throws IncorrectWorkingReferencesException {
+        log("") ;log(""); log("");
         log("************************************************************************************************");
         log("********* Hi my friends, here the downloaded movies and series handler. enjoy ******************");
         log("************************************************************************************************");
@@ -27,15 +27,11 @@ public class DownloadedItemsHandler {
         actionHandler.put(ActionType.DOWNLOADS_REMOTE_COPY, new GrabbedDownloadsHandler(configFileLoader));
     }
 
-    public static void main(String[] args) throws IncorrectWorkingReferencesException, IOException {
+    public static void main(String[] args) throws IncorrectWorkingReferencesException {
         new DownloadedItemsHandler().process();
     }
 
     private void process() {
-        if (Boolean.parseBoolean(configFileLoader.getConfig(MANAGE_FAILED_DOWNLOADS))) {
-            actionHandler.get(ActionType.RADARR_FAILED).handle();
-            actionHandler.get(ActionType.SONARR_FAILED).handle();
-        }
         actionHandler.get(ActionType.DOWNLOADS_REMOTE_COPY).handle();
         logWithDate("Handlers running. Main thread finished.");
     }

@@ -12,7 +12,6 @@ public class ConfigFileLoader extends CommonConfigFileLoader<ConfigFileLoader.Pr
 
     public enum ProjectConfiguration {
         IMMORTAL_PROCESS,
-        MANAGE_FAILED_DOWNLOADS,
         GRABBED_FILE_IDENTIFIER_REGEX,
         DOWNLOADS_TEAM_DRIVE_ID,
         DOWNLOADS_SERIES_FOLDER_ID,

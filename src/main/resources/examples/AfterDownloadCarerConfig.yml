@@ -1,5 +1,4 @@
 immortal_process: true
-manage_failed_downloads: false
 grabbed_file_identifier_regex: .+-gra[b|p].log
 downloads_team_drive_id: 23lk4kjh5k234thanks
 downloads_series_folder_id: 23lk4kjh5k234thanks-
