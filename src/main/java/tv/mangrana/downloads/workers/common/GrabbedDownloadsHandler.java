@@ -2,6 +2,7 @@ package tv.mangrana.downloads.workers.common;
 
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.config.LocalEnvironmentManager;
+import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.jobs.JobFile;
 import tv.mangrana.downloads.workers.common.jobs.JobHandler;
 import tv.mangrana.downloads.workers.common.jobs.JobsResume;
@@ -63,14 +64,17 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
             for (JobHandler job : jobs) {
                 try {
                     job.tryToMoveIfPossible();
+                } catch (NoElementFoundException e) {
+                    logger.nLog("not going to work now with {0} because its content is not present yet", job.getFullTitle());
                 } catch (Exception e) {
-                        String identifier = job.getFullTitle();
-                    log("not going to work now with " + identifier);
+                    logger.nHLog("unexpected error of type {0} when trying to crash-handle the element {1}", e.getMessage(), job.getFullTitle());
+                    e.printStackTrace();
                 }
             }
         }
         log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
-        log("-------------------------------------------------------------------------------------------------------------------");
+        String endLine = "-------------------------------------------------------------------------------------------------------------------";
+        log(endLine); log(endLine);
     }
 
     private List<JobHandler> resolveJobHandlers (AppGrabbedDownloadsHandler downloadsHandler) {
@@ -120,7 +124,7 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
                 ExecutorService executor = Executors.newFixedThreadPool(jobs.size());
                 handleJobsInParallel(jobs, executor);
             }
-            jobsState.resumeJobsLogPrint();
+            jobsState.resumeJobsLogPrint(!jobs.isEmpty());
             waitMinutes(5);
             keepLooping = Boolean.parseBoolean(configFileLoader.getConfig(IMMORTAL_PROCESS));
         }

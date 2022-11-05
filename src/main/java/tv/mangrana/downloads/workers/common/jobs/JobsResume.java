@@ -69,7 +69,10 @@ public class JobsResume {
     }
 
     public void resumeJobsLogPrint() {
-        if (reportDelayCounter > 10 && !sameResumeAlreadyPrinted()) {
+        resumeJobsLogPrint(false);
+    }
+    public void resumeJobsLogPrint(boolean hasIncorporatedJobs) {
+        if (hasIncorporatedJobs || (reportDelayCounter > 10 && !sameResumeAlreadyPrinted())) {
             log("**** JOBS RESUME ****");
             this.jobsState
                     .stream()

@@ -17,8 +17,9 @@ public class SerieRefresher {
 
     public void refreshSerieInSonarrAndPlex(SonarrSerie serie, Integer queueElementId) {
         sonarrApiGateway.refreshSerie(serie.getId());
-        if (queueElementId != null)
+        if (queueElementId != null) {
             sonarrApiGateway.deleteQueueElement(queueElementId);
+        }
         plexCommander.scanByPath(serie.getPath());
     }
 

@@ -5,7 +5,6 @@ import tv.mangrana.downloads.workers.common.GrabbedDownloadsHandler;
 import tv.mangrana.downloads.workers.common.Handler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 
-import java.io.IOException;
 import java.util.EnumMap;
 
 import static tv.mangrana.utils.Output.log;
@@ -20,7 +19,7 @@ public class DownloadedItemsHandler {
     private DownloadedItemsHandler() throws IncorrectWorkingReferencesException {
         log("") ;log(""); log("");
         log("************************************************************************************************");
-        log("********* Hi my friends, here the downloaded movies and series handler. enjoy ******************");
+        log("********* Hi my friends, here the downloaded movies and series handler. Enjoy ******************");
         log("************************************************************************************************");
         configFileLoader = new ConfigFileLoader();
         actionHandler = new EnumMap<>(ActionType.class);

@@ -6,13 +6,24 @@
 
     <groupId>cat.hack3</groupId>
     <artifactId>mangrana-content-tools</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>hack3</id>
+            <url>https://mavenrepo.hack3.cat/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- most of logic -->
@@ -35,7 +46,13 @@
             <artifactId>resteasy-jackson2-provider</artifactId>
             <version>3.5.0.Final</version>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>3.5.0.Final</version>
+        </dependency>
 
+        <!-- google API -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
@@ -80,7 +97,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        cat.hack3.mangrana.downloads.DownloadedItemsHandler
+                                        tv.mangrana.downloads.DownloadedItemsHandler
                                     </mainClass>
                                 </manifest>
                             </archive>
