@@ -27,9 +27,9 @@ public class SeasonHandler extends SonarrElementHandler {
         super(logger, configFileLoader);
     }
 
-    public SeasonHandler initValues (String elementName, int serieId, int episodeCount){
+    public SeasonHandler initValues (String title, String elementName, int serieId, int episodeCount){
         this.episodeCount = episodeCount;
-        return (SeasonHandler) super.initValues(elementName, serieId);
+        return (SeasonHandler) super.initValues(title, elementName, serieId);
     }
 
     public void handle() throws NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException, IOException {
@@ -53,7 +53,7 @@ public class SeasonHandler extends SonarrElementHandler {
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
         if (Objects.isNull(serie)) throw new NoElementFoundException(msg("Could not found serie with id {0} in Sonarr", String.valueOf(appElementId)));
-        String seasonFolderName = getSeasonFolderNameFromSeason(elementName);
+        String seasonFolderName = getSeasonFolderNameFromSeason(title);
         copyService.copySeasonFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }

@@ -35,7 +35,7 @@ public class EpisodeHandler extends SonarrElementHandler {
         );
         SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
         if (Objects.isNull(serie)) return;
-        String seasonFolderName = getSeasonFolderNameFromEpisode(elementName);
+        String seasonFolderName = getSeasonFolderNameFromEpisode(title);
         copyService.copyEpisodeFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }

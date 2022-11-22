@@ -85,10 +85,10 @@ public class SonarrJobHandler extends JobHandler {
         if (EPISODE.equals(type)) {
             elementHandler = (SonarrElementHandler)
                     new EpisodeHandler(logger, configFileLoader)
-                    .initValues(elementName, serieId);
+                    .initValues(fullTitle, elementName, serieId);
         } else {
             elementHandler = new SeasonHandler(logger, configFileLoader)
-                    .initValues(elementName, serieId, episodeCount);
+                    .initValues(fullTitle, elementName, serieId, episodeCount);
         }
         return elementHandler;
     }

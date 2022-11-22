@@ -77,7 +77,7 @@ public abstract class JobHandler implements Runnable {
             jobFile.markDone();
         } catch (TooMuchTriesException | IOException | IncorrectWorkingReferencesException | NoElementFoundException e) {
             error=true;
-            logger.nLog("something wrong: "+e.getMessage());
+            logger.nLog("something wrong: {0}", e.getMessage());
             jobFile.driveBack();
             e.printStackTrace();
         } finally {

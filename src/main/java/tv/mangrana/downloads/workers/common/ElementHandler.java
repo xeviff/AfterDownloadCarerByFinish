@@ -18,6 +18,7 @@ public abstract class ElementHandler {
     protected boolean initiated=false;
 
     protected int appElementId;
+    protected String title;
     protected String elementName;
     protected final int googleWaitInterval;
 
@@ -39,7 +40,8 @@ public abstract class ElementHandler {
         }
     }
 
-    public ElementHandler initValues (String elementName, int appElementId){
+    public ElementHandler initValues (String title, String elementName, int appElementId){
+        this.title = title;
         this.elementName = elementName;
         this.appElementId = appElementId;
         initiated=true;

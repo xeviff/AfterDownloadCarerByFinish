@@ -49,7 +49,7 @@ public class RadarrJobHandler extends JobHandler {
 
     @Override
     protected ElementHandler getElementHandler() throws IOException {
-        return new MovieHandler(logger, configFileLoader).initValues(elementName, movieId);
+        return new MovieHandler(logger, configFileLoader).initValues(fullTitle, elementName, movieId);
     }
 
     protected void retrieveFileNameFromArrApp() throws TooMuchTriesException {
@@ -78,7 +78,7 @@ public class RadarrJobHandler extends JobHandler {
 
     protected void handleElement() throws IOException, NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException {
             new MovieHandler(logger, configFileLoader)
-                    .initValues(elementName, movieId)
+                    .initValues(fullTitle, elementName, movieId)
                     .handle();
     }
 
