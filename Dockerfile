@@ -5,7 +5,7 @@ WORKDIR $HOME
 ADD pom.xml $HOME
 RUN mvn verify --fail-never
 ADD . $HOME
-RUN mvn clean package
+RUN mvn clean package -Dmaven.test.skip=true
 
 FROM openjdk:8-jdk-alpine
 ENV TZ="Europe/Madrid"

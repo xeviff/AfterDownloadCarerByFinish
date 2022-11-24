@@ -27,7 +27,7 @@ public class RadarrJobHandler extends JobHandler {
     RadarrApiGateway radarrApiGateway;
     private int movieId;
 
-    public RadarrJobHandler(ConfigFileLoader configFileLoader, RadarrJobFile radarrJobFile, JobOrchestrator caller) throws IOException {
+    public RadarrJobHandler(ConfigFileLoader configFileLoader, RadarrJobFile radarrJobFile, JobOrchestrator caller) throws IOException, IncorrectWorkingReferencesException {
         super(configFileLoader, radarrJobFile, caller);
         radarrApiGateway = new RadarrApiGateway(configFileLoader);
         if (LocalEnvironmentManager.isLocal()){

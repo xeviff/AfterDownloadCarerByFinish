@@ -13,6 +13,6 @@ public interface AppGrabbedDownloadsHandler {
     @SuppressWarnings("rawtypes")
     JobFile provideJobFile(File jobFile) throws IncorrectWorkingReferencesException;
     @SuppressWarnings("rawtypes")
-    JobHandler provideJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException;
+    JobHandler provideJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException, IncorrectWorkingReferencesException;
     JobFileManager.JobFileType getJobFileType();
 }

@@ -40,12 +40,17 @@ public abstract class JobHandler implements Runnable {
     protected String downloadId;
 
     @SuppressWarnings("rawtypes")
-    protected JobHandler(ConfigFileLoader configFileLoader, JobFile jobFile, JobOrchestrator caller) throws IOException {
+    protected JobHandler(ConfigFileLoader configFileLoader, JobFile jobFile, JobOrchestrator caller) throws IOException, IncorrectWorkingReferencesException {
         this.configFileLoader = configFileLoader;
         copyService = new RemoteCopyService(configFileLoader);
         this.jobFile = jobFile;
         orchestrator = caller;
-        loadInfoFromJobFile();
+        try {
+            loadInfoFromJobFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IncorrectWorkingReferencesException("A problem was risen when getting info from file: "+e.getMessage());
+        }
     }
     protected abstract void loadInfoFromJobFile();
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {

@@ -29,7 +29,7 @@ public class SonarGrabbedDownloadsHandler implements AppGrabbedDownloadsHandler 
     }
 
     @SuppressWarnings("rawtypes")
-    public JobHandler provideJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException {
+    public JobHandler provideJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException, IncorrectWorkingReferencesException {
         return new SonarrJobHandler(configFileLoader, (SonarrJobFile)jobFileManager, orchestrator);
     }
 

@@ -74,7 +74,7 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
         }
         log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
         String endLine = "-------------------------------------------------------------------------------------------------------------------";
-        log(endLine); log(endLine);
+        log(endLine); log(endLine); log(endLine); log(endLine);
     }
 
     private List<JobHandler> resolveJobHandlers (AppGrabbedDownloadsHandler downloadsHandler) {

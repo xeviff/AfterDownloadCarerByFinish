@@ -73,7 +73,8 @@ public class RetryEngine<D> {
             List<D> children = childrenRequirements.retriever.apply(got);
             if (children.size() < childrenRequirements.children) {
                 waitLoopBehaviour(loopCount,
-                        msg("Not enough children yet and will retry every {0} minutes - {1}", minutesToWait, getCurrentTime()),
+                        msg("Not enough children yet ({2} vs {3}) and will retry every {0} minutes - {1}",
+                                minutesToWait, getCurrentTime(), children.size(), childrenRequirements.children),
                         msg("Too much tries when retrieving children from {0} while current is {1} and expected {2}",
                                 got.toString(), children.size(), childrenRequirements.children),
                         TOO_MUCH_RETRIES_CHILDREN_THRESHOLD

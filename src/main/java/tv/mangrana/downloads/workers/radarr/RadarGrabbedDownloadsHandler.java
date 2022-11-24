@@ -29,7 +29,7 @@ public class RadarGrabbedDownloadsHandler implements AppGrabbedDownloadsHandler 
     }
 
     @SuppressWarnings("rawtypes")
-    public JobHandler provideJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException {
+    public JobHandler provideJobHandler(ConfigFileLoader configFileLoader, JobFile jobFileManager, JobOrchestrator orchestrator) throws IOException, IncorrectWorkingReferencesException {
         return new RadarrJobHandler(configFileLoader, (RadarrJobFile)jobFileManager, orchestrator);
     }
 

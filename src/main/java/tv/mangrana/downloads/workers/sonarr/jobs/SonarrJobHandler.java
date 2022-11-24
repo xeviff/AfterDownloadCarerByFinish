@@ -9,6 +9,7 @@ import tv.mangrana.downloads.workers.sonarr.EpisodeHandler;
 import tv.mangrana.downloads.workers.sonarr.SeasonHandler;
 import tv.mangrana.downloads.workers.sonarr.SerieRefresher;
 import tv.mangrana.downloads.workers.sonarr.SonarrElementHandler;
+import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.exception.TooMuchTriesException;
 import tv.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
@@ -33,7 +34,7 @@ public class SonarrJobHandler extends JobHandler {
     private int serieId;
     private int episodeCount;
 
-    public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFile sonarrJobFile, JobOrchestrator caller) throws IOException {
+    public SonarrJobHandler(ConfigFileLoader configFileLoader, SonarrJobFile sonarrJobFile, JobOrchestrator caller) throws IOException, IncorrectWorkingReferencesException {
         super(configFileLoader, sonarrJobFile, caller);
         sonarrApiGateway = new SonarrApiGateway(configFileLoader);
         serieRefresher = new SerieRefresher(configFileLoader);
