@@ -48,7 +48,11 @@ public class SonarrJobHandler extends JobHandler {
     @SuppressWarnings("unchecked")
     protected void loadInfoFromJobFile() {
         fullTitle = jobFile.getInfo(SONARR_RELEASE_TITLE);
-        jobTitle = fullTitle.substring(0, 45)+"..";
+        try {
+            jobTitle = fullTitle.substring(0, 45) + "..";
+        } catch (Exception e) {
+            jobTitle = fullTitle;
+        }
         logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_DOWNLOAD_ID);
         episodeCount = Integer.parseInt(jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_RELEASE_EPISODECOUNT));

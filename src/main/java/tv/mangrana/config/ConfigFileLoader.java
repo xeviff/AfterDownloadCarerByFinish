@@ -12,12 +12,14 @@ public class ConfigFileLoader extends CommonConfigFileLoader<ConfigFileLoader.Pr
 
     public enum ProjectConfiguration {
         IMMORTAL_PROCESS,
+        CHECK_EPISODE_FILES_NUMBER_UPLOADED,
         GRABBED_FILE_IDENTIFIER_REGEX,
         DOWNLOADS_TEAM_DRIVE_ID,
         DOWNLOADS_SERIES_FOLDER_ID,
         MOVIES_TEAM_DRIVE_ID,
         SERIES_TEAM_DRIVE_ID,
         GOOGLE_RETRY_INTERVAL,
+        JOB_FILES_PICK_UP_INTERVAL,
         SONARR_RETRY_INTERVAL,
         RADARR_RETRY_INTERVAL,
     }

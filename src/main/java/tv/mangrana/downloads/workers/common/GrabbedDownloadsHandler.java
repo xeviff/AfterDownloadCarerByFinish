@@ -20,8 +20,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.GRABBED_FILE_IDENTIFIER_REGEX;
-import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.IMMORTAL_PROCESS;
+import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static tv.mangrana.jobs.JobFileManager.moveUncompletedJobsToRetry;
 import static tv.mangrana.jobs.JobFileManager.retrieveJobFiles;
 import static tv.mangrana.utils.Output.log;
@@ -125,7 +124,7 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
                 handleJobsInParallel(jobs, executor);
             }
             jobsState.resumeJobsLogPrint(!jobs.isEmpty());
-            waitMinutes(5);
+            waitMinutes(Integer.parseInt(configFileLoader.getConfig(JOB_FILES_PICK_UP_INTERVAL)));
             keepLooping = Boolean.parseBoolean(configFileLoader.getConfig(IMMORTAL_PROCESS));
         }
     }

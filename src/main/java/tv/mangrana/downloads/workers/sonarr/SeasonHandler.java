@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.CHECK_EPISODE_FILES_NUMBER_UPLOADED;
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_SERIES_FOLDER_ID;
 import static tv.mangrana.utils.Output.msg;
 import static tv.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
@@ -42,12 +43,21 @@ public class SeasonHandler extends SonarrElementHandler {
             Function<File, List<File>> childrenRetriever = file ->
                     googleDriveApiGateway.getChildrenFromParent(file, false);
             Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
-            RetryEngine<File> retryer = new RetryEngine<>(
-                    "SeasonOnGoogle",
-                    googleWaitInterval,
-                    new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint),
-                    this::log
-            );
+            RetryEngine<File> retryer = null;
+            if (Boolean.parseBoolean(configFileLoader.getConfig(CHECK_EPISODE_FILES_NUMBER_UPLOADED))) {
+                retryer = new RetryEngine<>(
+                        "SeasonOnGoogle",
+                        googleWaitInterval,
+                        new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint),
+                        this::log
+                );
+            } else {
+                retryer = new RetryEngine<>(
+                        "SeasonOnGoogle",
+                        googleWaitInterval,
+                        this::log
+                );
+            }
             copyService.setRetryEngine(retryer);
         }
 

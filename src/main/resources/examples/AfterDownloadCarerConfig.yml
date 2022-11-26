@@ -1,10 +1,12 @@
 immortal_process: true
+check_episode_files_number_uploaded: false
 grabbed_file_identifier_regex: .+-gra[b|p].log
 downloads_team_drive_id: 23lk4kjh5k234thanks
 downloads_series_folder_id: 23lk4kjh5k234thanks-
 movies_team_drive_id: 23lk4kjh5k234thanks
 series_team_drive_id: 23lk4kjh5k234thanks
 google_retry_interval: 30
+job_files_pick_up_interval: 1
 sonarr_retry_interval: 5
 radarr_retry_interval: 5
 
