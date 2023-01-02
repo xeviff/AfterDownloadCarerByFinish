@@ -14,13 +14,14 @@ public class TransmissionJobFile extends JobFile<TransmissionJobFile.GrabInfo> {
         TORRENT_HASH,
         TORRENT_NAME,
         TORRENT_DIR,
+        STATUS,
     }
 
     private final EnumMap<GrabInfo, String> infoMap;
 
     public TransmissionJobFile(File jobFile) throws IncorrectWorkingReferencesException {
         super(jobFile);
-        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, false);
+        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, true);
     }
 
     @Override

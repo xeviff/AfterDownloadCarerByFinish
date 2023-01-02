@@ -17,18 +17,17 @@ import tv.mangrana.jobs.JobFileManager;
 import tv.mangrana.utils.EasyLogger;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.time.Duration;
-import java.time.Instant;
 
-public abstract class JobHandler implements Runnable {
+public abstract class JobHandler implements Runnable{
 
     protected EasyLogger logger;
 
     protected ConfigFileLoader configFileLoader;
     protected RemoteCopyService copyService;
+    public static final String COMPLETE_STATUS = "complete";
 
     @SuppressWarnings("rawtypes")
     protected JobFile jobFile;
@@ -65,24 +64,21 @@ public abstract class JobHandler implements Runnable {
             transmissionJob.forceMarkDone();
         }
     }
+
     @Override
     public void run() {
         boolean error=false;
         try {
             logger.nLog("going to handle the so called <{0}>", fullTitle);
-            setJobStateInitiated();
-            if (StringUtils.isNotEmpty(elementName)) {
-                logger.nLog("Retrieved successfully from file the cached element name: <{0}> :D", elementName);
-            } else {
-                retrieveFileNameFromArrApp();
-                writeElementNameToJobInfo(elementName);
-            }
-            setJobStateWorkingOrSleep();
+            setJobStateWorking();
             getElementHandler().handle();
+            writeCompletedStatusToJobInfo(jobFile.getFile());
+            writeCompletedStatusToJobInfo(transmissionJob.getFile());
             jobFile.markDone();
+            transmissionJob.forceMarkDone();
         } catch (Exception e) {
             error=true;
-            logger.nLog("something wrong: {0}", e.getMessage());
+            logger.nLog("Something wrong handling the job {1}: {0}", e.getMessage(), fullTitle);
             jobFile.driveBack();
             e.printStackTrace();
         } finally {
@@ -91,44 +87,19 @@ public abstract class JobHandler implements Runnable {
     }
 
     protected abstract ElementHandler getElementHandler() throws IOException;
-    protected abstract void retrieveFileNameFromArrApp() throws TooMuchTriesException;
 
-    private void writeElementNameToJobInfo(String elementName) throws IOException {
-        try (Writer output = new BufferedWriter(
-                new FileWriter(jobFile.getFile().getAbsolutePath(), true))) {
-            output.append(SonarrJobFile.GrabInfo.JAVA_FILENAME.name().toLowerCase().concat(": "+elementName));
-            logger.nLog("persisted elementName to job file -> "+elementName);
+    private void writeCompletedStatusToJobInfo(File file) throws IOException {
+        try (BufferedWriter output = new BufferedWriter(
+                new FileWriter(file.getAbsolutePath(), true))) {
+            output.newLine();
+            output.append(SonarrJobFile.GrabInfo.STATUS.name().toLowerCase().concat(": " + COMPLETE_STATUS));
+            logger.nLog("persisted status -complete- to job file " + file.getName());
         }
     }
 
-    private void setJobStateWorkingOrSleep() {
-        synchronized (orchestrator) {
-            orchestrator.jobHasFileName(this);
-            if (orchestrator.isWorkingWithAJob()) {
-                try {
-                    Instant beforeWait = Instant.now();
-                    while (orchestrator.isWorkingWithAJob()) {
-                        orchestrator.wait();
-                    }
-                    Instant afterWait = Instant.now();
-                    if (Duration.between(beforeWait, afterWait).toMinutes()<1) {
-                        logger.nHLog("seems that things are going too fast between job sleep and its resume");
-                    }
-                } catch (InterruptedException e) {
-                    logger.nHLog("could not put on waiting the job {0}", jobTitle);
-                    Thread.currentThread().interrupt();
-                    e.printStackTrace();
-                }
-            }
-            jobFile.markDoing();
-            orchestrator.jobWorking(this);
-        }
-    }
-
-    private void setJobStateInitiated() {
-        synchronized (orchestrator) {
-            orchestrator.jobInitiated(this);
-        }
+    private void setJobStateWorking() {
+        jobFile.markDoing();
+        orchestrator.jobWorking(this);
     }
 
     private void setJobStateFinished(boolean error) {
@@ -142,24 +113,12 @@ public abstract class JobHandler implements Runnable {
         }
     }
 
-    protected void logWhenActive(String msg, Object... params){
-        if (!orchestrator.isWorkingWithAJob()
-                || orchestrator.isJobWorking(this)) {
-            logger.nLog(msg, params);
-        }
-    }
-
     public String getFullTitle() {
         return fullTitle;
     }
 
     public String getJobTitle() {
         return jobTitle;
-    }
-
-    @SuppressWarnings("rawtypes")
-    public JobFile getJobFile() {
-        return jobFile;
     }
 
     public JobFileManager.JobFileType getJobType() {
@@ -178,4 +137,6 @@ public abstract class JobHandler implements Runnable {
         this.transmissionJob = transmissionJob;
         this.elementName = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_NAME);
     }
+
+    public abstract boolean isAlreadyComplete();
 }

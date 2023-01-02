@@ -21,8 +21,6 @@ public class ConfigFileLoader extends CommonConfigFileLoader<ConfigFileLoader.Pr
         SERIES_TEAM_DRIVE_ID,
         GOOGLE_RETRY_INTERVAL,
         JOB_FILES_PICK_UP_INTERVAL,
-        SONARR_RETRY_INTERVAL,
-        RADARR_RETRY_INTERVAL,
     }
 
     @Override

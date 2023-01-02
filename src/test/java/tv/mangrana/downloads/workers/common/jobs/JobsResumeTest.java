@@ -13,11 +13,11 @@ public class JobsResumeTest {
         String job1 = "Power Book III - Raising Kanan S02E04 ..";
         String job2 = "Rick y Morty S06E01 HMAX WEB-DL 1080p ..";
         String job3 = "P-Valley S02E10 1080p AMZN WEB-DL ESP- ..";
-        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, job1, "initiated");
+        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, "1", job1, "initiated");
         Thread.sleep(1500);
-        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, job2, "initiated");
+        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, "2", job2, "initiated");
         Thread.sleep(1500);
-        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, job3, "initiated");
+        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, "3", job3, "initiated");
         Thread.sleep(1500);
 
         jobsResume.reportDelayCounter = 11;
@@ -25,7 +25,7 @@ public class JobsResumeTest {
         jobsResume.resumeJobsLogPrint();
         Assert.assertTrue(jobsResume.sameResumeAlreadyPrinted());
 
-        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, job3, "finished");
+        jobsResume.put(JobFileManager.JobFileType.SONARR_JOBS, "3", job3, "finished");
         Thread.sleep(1500);
         Assert.assertFalse(jobsResume.sameResumeAlreadyPrinted());
 
@@ -35,7 +35,7 @@ public class JobsResumeTest {
         Assert.assertTrue(jobsResume.sameResumeAlreadyPrinted());
 
         String job4 = "Señor de los anillos - el cuento de -...";
-        jobsResume.put(JobFileManager.JobFileType.RADARR_JOBS, job4, "initiated");
+        jobsResume.put(JobFileManager.JobFileType.RADARR_JOBS, "4", job4, "initiated");
         Assert.assertFalse(jobsResume.sameResumeAlreadyPrinted());
 
         jobsResume.reportDelayCounter = 11;

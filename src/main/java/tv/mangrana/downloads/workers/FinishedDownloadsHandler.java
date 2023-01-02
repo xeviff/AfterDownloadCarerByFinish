@@ -1,33 +1,36 @@
 package tv.mangrana.downloads.workers;
 
+import org.apache.commons.collections4.CollectionUtils;
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.config.LocalEnvironmentManager;
 import tv.mangrana.downloads.workers.common.AppGrabbedDownloadsHandler;
 import tv.mangrana.downloads.workers.common.Handler;
 import tv.mangrana.downloads.workers.common.JobOrchestrator;
-import tv.mangrana.downloads.workers.transmission.TransmissionJobFile;
-import tv.mangrana.exception.NoElementFoundException;
-import tv.mangrana.jobs.JobFile;
 import tv.mangrana.downloads.workers.common.jobs.JobHandler;
 import tv.mangrana.downloads.workers.common.jobs.JobsResume;
 import tv.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
 import tv.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
+import tv.mangrana.downloads.workers.transmission.TransmissionJobFile;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
+import tv.mangrana.exception.NoElementFoundException;
+import tv.mangrana.jobs.JobFile;
 import tv.mangrana.jobs.JobFileManager;
 import tv.mangrana.utils.EasyLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
+import static tv.mangrana.downloads.workers.common.jobs.JobHandler.COMPLETE_STATUS;
 import static tv.mangrana.jobs.JobFileManager.moveUncompletedJobsToRetry;
 import static tv.mangrana.jobs.JobFileManager.retrieveJobFiles;
 import static tv.mangrana.utils.Output.log;
 import static tv.mangrana.utils.Waiter.waitMinutes;
-import static tv.mangrana.utils.Waiter.waitSeconds;
 
 public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
 
@@ -36,14 +39,12 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
     ConfigFileLoader configFileLoader;
 
     JobsResume jobsState = new JobsResume();
-    Set<String> handlingJobs = new HashSet<>();
-    JobHandler jobCurrentlyInWork;
 
     RadarGrabbedDownloadsHandler radarHandler = new RadarGrabbedDownloadsHandler();
     SonarGrabbedDownloadsHandler sonarrHandler = new SonarGrabbedDownloadsHandler();
 
     public FinishedDownloadsHandler() throws IncorrectWorkingReferencesException {
-        this.logger = new EasyLogger("IMMORTAL_HANDLER");
+        this.logger = new EasyLogger("ORCHESTRATOR");
         configFileLoader = new ConfigFileLoader();
     }
 
@@ -66,12 +67,11 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
             moveUncompletedJobsToRetry(sonarrHandler.getJobFileType());
         }
         handleJobsReadyToCopy();
-        //TODO implement continuous process
-        //handleRestOfJobs();
+        keepHandlingNewJobs();
     }
 
     private void handleJobsReadyToCopy() {
-        log(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
+        logger.nLog(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
         try {
             List<JobHandler> jobs = resolveJobHandlersFromTransmissionJobs();
 
@@ -87,9 +87,9 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
                     }
                 }
             } else {
-                log("No jobs????");
+                logger.nLog("No existing jobs to handle");
             }
-            log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
+            logger.nLog(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
             String endLine = "-------------------------------------------------------------------------------------------------------------------";
         log(endLine); log(endLine); log(endLine); log(endLine);
         } catch (IncorrectWorkingReferencesException e) {
@@ -99,15 +99,15 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
 
     private List<JobHandler> resolveJobHandlersFromTransmissionJobs() throws IncorrectWorkingReferencesException {
         List<JobHandler> presentJobs = new ArrayList<>();
-        List<JobHandler> jobs = resolveJobHandlers(radarHandler);
-        jobs.addAll(resolveJobHandlers(sonarrHandler));
+        List<JobHandler> candidateJobs = resolveJobHandlers(radarHandler);
+        candidateJobs.addAll(resolveJobHandlers(sonarrHandler));
 
         List<File> transmissionJobFiles = retrieveJobFiles(configFileLoader.getConfig(DOWNLOADED_TORRENT_FILE_IDENTIFIER_REGEX), JobFileManager.JobFileType.TRANSMISSION_JOBS);
         if (!transmissionJobFiles.isEmpty()) {
             for (File transmissionJobFile : transmissionJobFiles) {
                 TransmissionJobFile transmissionJob = new TransmissionJobFile(transmissionJobFile);
                 String torrentHash = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_HASH);
-                Optional<JobHandler> optionalArrJob = getJobByDownloadId(torrentHash, jobs);
+                Optional<JobHandler> optionalArrJob = getJobByDownloadId(torrentHash, candidateJobs);
                 if (optionalArrJob.isPresent()) {
                     JobHandler arrJob = optionalArrJob.get();
                     arrJob.setTransmissionJob(transmissionJob);
@@ -126,16 +126,10 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
     }
 
     private List<JobHandler> resolveJobHandlers (AppGrabbedDownloadsHandler downloadsHandler) {
-        long filesIncorporated = 0;
-        long filesIgnored = 0;
         List<JobHandler> jobs = new ArrayList<>();
         List<File> jobFiles = retrieveJobFiles(configFileLoader.getConfig(GRABBED_FILE_IDENTIFIER_REGEX), downloadsHandler.getJobFileType());
         if (!jobFiles.isEmpty()) {
             for (File jobFile : jobFiles) {
-                if (handlingJobs.contains(jobFile.getName())) {
-                    filesIgnored++;
-                    continue;
-                }
                 try {
                     @SuppressWarnings("rawtypes")
                     JobFile jobFileManager = downloadsHandler.provideJobFile(jobFile);
@@ -143,87 +137,99 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
                         throw new IncorrectWorkingReferencesException("no valid info at file");
                     }
                     JobHandler job = downloadsHandler.provideJobHandler(configFileLoader, jobFileManager, this);
+                    if (job.isAlreadyComplete()) {
+                        logger.nLog("WARN: Job already completed. This file shouldn't be in this folder anymore ({0})", job.getJobTitle());
+                        continue;
+                    }
                     jobs.add(job);
-                    filesIncorporated++;
                 } catch (IOException | IncorrectWorkingReferencesException  e) {
                     String identifier = jobFile.getAbsolutePath();
                     log("could not get the job from file " + identifier);
-                }
-            }
-            if (filesIncorporated > 0) {
-                logger.nLogD("Resolved {2} jobs for handling loop: filesIncorporated={0}, filesIgnored={1}",
-                        filesIncorporated, filesIgnored, downloadsHandler.getJobFileType().getFolderName().toUpperCase());
-                try {
-                    configFileLoader.refresh();
-                } catch (IncorrectWorkingReferencesException e) {
-                    logger.nHLog("couldn't refresh the values from the project config file");
                 }
             }
         }
         return jobs;
     }
 
-    private void handleRestOfJobs() {
+    private void keepHandlingNewJobs() {
         boolean keepLooping = true;
         while (keepLooping) {
-            List<JobHandler> jobs = resolveJobHandlers(radarHandler);
-            jobs.addAll(resolveJobHandlers(sonarrHandler));
-            if (!jobs.isEmpty()) {
-                ExecutorService executor = Executors.newFixedThreadPool(jobs.size());
-                handleJobsInParallel(jobs, executor);
+            long filesIncorporated = 0;
+            long filesIgnored = 0;
+            List<JobHandler> candidateJobs = resolveJobHandlers(radarHandler);
+            candidateJobs.addAll(resolveJobHandlers(sonarrHandler));
+            for (JobHandler arrJob : candidateJobs) {
+                if (jobsState.containsDownload(arrJob.getDownloadId()))
+                    filesIgnored++;
+                else {
+                    jobsState.put(arrJob.getJobType(), arrJob.getDownloadId(), arrJob.getJobTitle(), "Awaiting finished download trigger");
+                    filesIncorporated++;
+                }
             }
-            jobsState.resumeJobsLogPrint(!jobs.isEmpty());
+            List<File> transmissionJobFiles = retrieveJobFiles(configFileLoader.getConfig(DOWNLOADED_TORRENT_FILE_IDENTIFIER_REGEX), JobFileManager.JobFileType.TRANSMISSION_JOBS);
+            if (CollectionUtils.isNotEmpty(transmissionJobFiles)) {
+                handleJobsInParallel(candidateJobs, transmissionJobFiles);
+            }
+            if (filesIncorporated > 0) {
+                logger.nLogD("Resolved jobs for handling loop: filesIncorporated={0}, filesIgnored={1}", filesIncorporated, filesIgnored);
+            }
+            jobsState.resumeJobsLogPrint(filesIncorporated > 0);
             waitMinutes(Integer.parseInt(configFileLoader.getConfig(JOB_FILES_PICK_UP_INTERVAL)));
             keepLooping = Boolean.parseBoolean(configFileLoader.getConfig(IMMORTAL_PROCESS));
         }
     }
 
-    private void handleJobsInParallel(List<JobHandler> jobHandlers, ExecutorService executor) {
-        for (JobHandler jobHandler : jobHandlers) {
-            executor.execute(jobHandler);
-            handlingJobs.add(getFileNameFromJob(jobHandler));
-            waitSeconds(5);
+    private void handleJobsInParallel(List<JobHandler> candidateJobs, List<File> transmissionJobFiles) {
+        ExecutorService executor = Executors.newFixedThreadPool(transmissionJobFiles.size());
+        getPresentJobsFromCandidates(candidateJobs, transmissionJobFiles)
+                .forEach(executor::execute);
+    }
+
+    private List<JobHandler> getPresentJobsFromCandidates(List<JobHandler> candidateJobs, List<File> transmissionJobFiles) {
+        List<JobHandler> presentJobs = new ArrayList<>();
+        for (File transmissionJobFile : transmissionJobFiles) {
+            try {
+                Optional<JobHandler> candidateArrJob = Optional.empty();
+                TransmissionJobFile transmissionJob = new TransmissionJobFile(transmissionJobFile);
+                String downloadId = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_HASH);
+                String torrentName = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_NAME);
+                String status = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.STATUS);
+                if (COMPLETE_STATUS.equals(status)) {
+                    logger.nLog("WARN: Job already completed. This file shouldn't be in this folder anymore: {0}", transmissionJobFile.getName());
+                    jobsState.put(JobFileManager.JobFileType.TRANSMISSION_JOBS, downloadId, torrentName, "already handled");
+                } else {
+                    if (!candidateJobs.isEmpty()) {
+                        candidateArrJob = getJobByDownloadId(downloadId, candidateJobs);
+                    } else {
+                        logger.nHLog("No sonarr nor radarr jobs available");
+                    }
+                    if (candidateArrJob.isPresent()) {
+                        candidateArrJob.get().setTransmissionJob(transmissionJob);
+                        presentJobs.add(candidateArrJob.get());
+                    } else {
+                        jobsState.put(JobFileManager.JobFileType.TRANSMISSION_JOBS, downloadId, torrentName, "no arr-job found");
+                    }
+                }
+            } catch (Exception e) {
+                logger.nHLog("Transmission job could not been prepared: {0}", transmissionJobFile.getName());
+            }
         }
-    }
-
-    public boolean isWorkingWithAJob() {
-        return jobCurrentlyInWork!=null;
-    }
-
-    public boolean isJobWorking(JobHandler job) {
-        return job.equals(jobCurrentlyInWork);
-    }
-
-    public void jobInitiated(JobHandler job) {
-        jobsState.put(job.getJobType(), job.getJobTitle(), "initiated");
-    }
-
-    public void jobHasFileName(JobHandler job) {
-        jobsState.put(job.getJobType(), job.getJobTitle(), "has filename");
+        return presentJobs;
     }
 
     public void jobWorking(JobHandler job) {
         logger.nLog("WORKING WITH "+job.getFullTitle());
-        jobsState.put(job.getJobType(), job.getJobTitle(), "working");
-        jobCurrentlyInWork=job;
+        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), "working");
     }
 
     public void jobFinished(JobHandler job) {
         logger.nLog("NOT WORKING ANYMORE WITH "+job.getFullTitle());
-        jobsState.put(job.getJobType(), job.getJobTitle(), "finished");
-        handlingJobs.remove(getFileNameFromJob(job));
-        jobCurrentlyInWork=null;
+        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), "finished");
     }
 
     public void jobError(JobHandler job) {
         logger.nLog("NOT WORKING ANYMORE WITH "+job.getFullTitle());
-        jobsState.put(job.getJobType(), job.getJobTitle(), "error");
-        handlingJobs.remove(getFileNameFromJob(job));
-        jobCurrentlyInWork=null;
-    }
-
-    private String getFileNameFromJob(JobHandler job) {
-        return job.getJobFile().getFile().getName();
+        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), "error");
     }
 
 }

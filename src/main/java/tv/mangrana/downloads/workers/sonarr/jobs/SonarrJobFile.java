@@ -1,7 +1,7 @@
 package tv.mangrana.downloads.workers.sonarr.jobs;
 
-import tv.mangrana.jobs.JobFile;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
+import tv.mangrana.jobs.JobFile;
 import tv.mangrana.utils.yml.FakeYmlLoader;
 
 import java.io.File;
@@ -15,14 +15,14 @@ public class SonarrJobFile extends JobFile<SonarrJobFile.GrabInfo> {
         SONARR_SERIES_ID,
         SONARR_RELEASE_EPISODECOUNT,
         SONARR_DOWNLOAD_ID,
-        JAVA_FILENAME,
+        STATUS,
     }
 
     private final EnumMap<GrabInfo, String> infoMap;
 
     public SonarrJobFile(File jobFile) throws IncorrectWorkingReferencesException {
         super(jobFile);
-        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, false);
+        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, true);
     }
 
     @Override

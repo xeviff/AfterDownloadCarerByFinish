@@ -1,7 +1,7 @@
 package tv.mangrana.downloads.workers.radarr.jobs;
 
-import tv.mangrana.jobs.JobFile;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
+import tv.mangrana.jobs.JobFile;
 import tv.mangrana.utils.yml.FakeYmlLoader;
 
 import java.io.File;
@@ -14,14 +14,14 @@ public class RadarrJobFile extends JobFile<RadarrJobFile.GrabInfo> {
         RADARR_RELEASE_TITLE,
         RADARR_MOVIE_ID,
         RADARR_DOWNLOAD_ID,
-        JAVA_FILENAME,
+        STATUS,
     }
 
     private final EnumMap<GrabInfo, String> infoMap;
 
     public RadarrJobFile(File jobFile) throws IncorrectWorkingReferencesException {
         super(jobFile);
-        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, false);
+        infoMap = FakeYmlLoader.getEnumMapFromFile(jobFile, GrabInfo.class, true);
     }
 
     @Override
