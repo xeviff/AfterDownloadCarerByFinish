@@ -25,11 +25,11 @@ public class MovieHandler extends ElementHandler {
         radarrApiGateway = new RadarrApiGateway(configFileLoader);
     }
 
-    public void handle() throws NoElementFoundException, IncorrectWorkingReferencesException, TooMuchTriesException, IOException {
+    public void handle() throws NoElementFoundException, TooMuchTriesException, IOException {
         handle(true);
     }
 
-    public void handle(boolean waitUntilExists) throws IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException, IOException {
+    public void handle(boolean waitUntilExists) throws NoElementFoundException, TooMuchTriesException, IOException {
         if (!initiated) throw new CircuitBreakingException("initValues method execution is needed first");
         if (waitUntilExists) copyService.setRetryEngine(new RetryEngine<>(
                 "MovieOnGoogle",
@@ -45,7 +45,7 @@ public class MovieHandler extends ElementHandler {
         try {
             googleDriveApiGateway.lookupElementByName(elementName, VIDEO, configFileLoader.getConfig(DOWNLOADS_TEAM_DRIVE_ID));
         } catch (NoElementFoundException e) {
-            throw new NoElementFoundException("episode not downloaded yet");
+            throw new NoElementFoundException("movie not downloaded yet");
         }
         handle(false);
     }

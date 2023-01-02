@@ -1,6 +1,7 @@
 immortal_process: true
 check_episode_files_number_uploaded: false
-grabbed_file_identifier_regex: .+-gra[b|p].log
+grabbed_file_identifier_regex: .+-grab.job
+downloaded_torrent_file_identifier_regex: .+-finished.job
 downloads_team_drive_id: 23lk4kjh5k234thanks
 downloads_series_folder_id: 23lk4kjh5k234thanks-
 movies_team_drive_id: 23lk4kjh5k234thanks

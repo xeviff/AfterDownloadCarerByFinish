@@ -1,7 +1,11 @@
-package tv.mangrana.downloads.workers.common;
+package tv.mangrana.downloads.workers;
 
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.config.LocalEnvironmentManager;
+import tv.mangrana.downloads.workers.common.AppGrabbedDownloadsHandler;
+import tv.mangrana.downloads.workers.common.Handler;
+import tv.mangrana.downloads.workers.common.JobOrchestrator;
+import tv.mangrana.downloads.workers.transmission.TransmissionJobFile;
 import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.jobs.JobFile;
 import tv.mangrana.downloads.workers.common.jobs.JobHandler;
@@ -9,14 +13,12 @@ import tv.mangrana.downloads.workers.common.jobs.JobsResume;
 import tv.mangrana.downloads.workers.radarr.RadarGrabbedDownloadsHandler;
 import tv.mangrana.downloads.workers.sonarr.SonarGrabbedDownloadsHandler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
+import tv.mangrana.jobs.JobFileManager;
 import tv.mangrana.utils.EasyLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,7 +29,7 @@ import static tv.mangrana.utils.Output.log;
 import static tv.mangrana.utils.Waiter.waitMinutes;
 import static tv.mangrana.utils.Waiter.waitSeconds;
 
-public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
+public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
 
     private final EasyLogger logger;
 
@@ -40,40 +42,87 @@ public class GrabbedDownloadsHandler implements Handler, JobOrchestrator {
     RadarGrabbedDownloadsHandler radarHandler = new RadarGrabbedDownloadsHandler();
     SonarGrabbedDownloadsHandler sonarrHandler = new SonarGrabbedDownloadsHandler();
 
-    public GrabbedDownloadsHandler(ConfigFileLoader configFileLoader) {
-        this.logger = new EasyLogger("ORCHESTRATOR");
-        this.configFileLoader = configFileLoader;
+    public FinishedDownloadsHandler() throws IncorrectWorkingReferencesException {
+        this.logger = new EasyLogger("IMMORTAL_HANDLER");
+        configFileLoader = new ConfigFileLoader();
+    }
+
+    public static void main(String[] args) throws IncorrectWorkingReferencesException {
+        new FinishedDownloadsHandler().handle();
     }
 
     @Override
     public void handle() {
+        log("************************************************************************************************");
+        log("************************************************************************************************");
+        log("************************************************************************************************");
+        log("********* Hi my friends, here the downloaded movies and series handler. Enjoy ******************");
+        log("************************************************************************************************");
+        log("************************************************************************************************");
+        log("************************************************************************************************");
+
         if (!LocalEnvironmentManager.isLocal()) {
             moveUncompletedJobsToRetry(radarHandler.getJobFileType());
             moveUncompletedJobsToRetry(sonarrHandler.getJobFileType());
         }
         handleJobsReadyToCopy();
-        handleRestOfJobs();
+        //TODO implement continuous process
+        //handleRestOfJobs();
     }
 
     private void handleJobsReadyToCopy() {
         log(">>>> in first place, going to try to copy those elements that are already downloaded <<<<");
+        try {
+            List<JobHandler> jobs = resolveJobHandlersFromTransmissionJobs();
+
+            if (!jobs.isEmpty()) {
+                for (JobHandler job : jobs) {
+                    try {
+                        job.tryToMoveIfPossible();
+                    } catch (NoElementFoundException e) {
+                        logger.nLog("not going to work now with {0} because its content is not present yet", job.getFullTitle());
+                    } catch (Exception e) {
+                        logger.nHLog("unexpected error of type {0} when handling the element {1}", e.getMessage(), job.getFullTitle());
+                        e.printStackTrace();
+                    }
+                }
+            } else {
+                log("No jobs????");
+            }
+            log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
+            String endLine = "-------------------------------------------------------------------------------------------------------------------";
+        log(endLine); log(endLine); log(endLine); log(endLine);
+        } catch (IncorrectWorkingReferencesException e) {
+            logger.nHLog("Has been a problem trying to retrieve the jobs from transmission, radarr or sonarr");
+        }
+    }
+
+    private List<JobHandler> resolveJobHandlersFromTransmissionJobs() throws IncorrectWorkingReferencesException {
+        List<JobHandler> presentJobs = new ArrayList<>();
         List<JobHandler> jobs = resolveJobHandlers(radarHandler);
         jobs.addAll(resolveJobHandlers(sonarrHandler));
-        if (!jobs.isEmpty()) {
-            for (JobHandler job : jobs) {
-                try {
-                    job.tryToMoveIfPossible();
-                } catch (NoElementFoundException e) {
-                    logger.nLog("not going to work now with {0} because its content is not present yet", job.getFullTitle());
-                } catch (Exception e) {
-                    logger.nHLog("unexpected error of type {0} when trying to crash-handle the element {1}", e.getMessage(), job.getFullTitle());
-                    e.printStackTrace();
-                }
+
+        List<File> transmissionJobFiles = retrieveJobFiles(configFileLoader.getConfig(DOWNLOADED_TORRENT_FILE_IDENTIFIER_REGEX), JobFileManager.JobFileType.TRANSMISSION_JOBS);
+        if (!transmissionJobFiles.isEmpty()) {
+            for (File transmissionJobFile : transmissionJobFiles) {
+                TransmissionJobFile transmissionJob = new TransmissionJobFile(transmissionJobFile);
+                String torrentHash = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_HASH);
+                Optional<JobHandler> optionalArrJob = getJobByDownloadId(torrentHash, jobs);
+                if (optionalArrJob.isPresent()) {
+                    JobHandler arrJob = optionalArrJob.get();
+                    arrJob.setTransmissionJob(transmissionJob);
+                    presentJobs.add(arrJob);
+                } else
+                    logger.nHLog("Not found any sonarr/radarr job-file for this element: <{0}>", transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_NAME));
             }
         }
-        log(">>>> finished --check and copy right away if possible-- round, now after a while will start the normal process <<<<");
-        String endLine = "-------------------------------------------------------------------------------------------------------------------";
-        log(endLine); log(endLine); log(endLine); log(endLine);
+        return presentJobs;
+    }
+
+    private Optional<JobHandler> getJobByDownloadId(String torrentHash, List<JobHandler> jobs) {
+        return Optional.ofNullable(torrentHash).flatMap(downloadHash -> jobs.stream()
+                .filter(job -> downloadHash.toUpperCase().equals(job.getDownloadId()))
+                .findFirst());
     }
 
     private List<JobHandler> resolveJobHandlers (AppGrabbedDownloadsHandler downloadsHandler) {

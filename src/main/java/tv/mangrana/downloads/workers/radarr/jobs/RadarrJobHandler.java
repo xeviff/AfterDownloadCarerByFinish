@@ -44,7 +44,6 @@ public class RadarrJobHandler extends JobHandler {
         logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_DOWNLOAD_ID);
         movieId = Integer.parseInt(jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_MOVIE_ID));
-        fileName = jobFile.getInfo(RadarrJobFile.GrabInfo.JAVA_FILENAME);
     }
 
     @Override

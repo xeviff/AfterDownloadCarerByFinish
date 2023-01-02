@@ -58,7 +58,6 @@ public class SonarrJobHandler extends JobHandler {
         episodeCount = Integer.parseInt(jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_RELEASE_EPISODECOUNT));
         type = episodeCount == 1 ? EPISODE : DownloadType.SEASON;
         serieId = Integer.parseInt(jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_SERIES_ID));
-        fileName = jobFile.getInfo(SonarrJobFile.GrabInfo.JAVA_FILENAME);
     }
 
     protected void retrieveFileNameFromArrApp() throws TooMuchTriesException {

@@ -7,6 +7,7 @@ import tv.mangrana.downloads.workers.common.JobOrchestrator;
 import tv.mangrana.downloads.workers.radarr.jobs.RadarrJobHandler;
 import tv.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import tv.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
+import tv.mangrana.downloads.workers.transmission.TransmissionJobFile;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.exception.TooMuchTriesException;
@@ -36,8 +37,8 @@ public abstract class JobHandler implements Runnable {
     protected String jobTitle="-not_set-";
     protected String fullTitle;
     protected String elementName;
-    protected String fileName;
     protected String downloadId;
+    private TransmissionJobFile transmissionJob;
 
     @SuppressWarnings("rawtypes")
     protected JobHandler(ConfigFileLoader configFileLoader, JobFile jobFile, JobOrchestrator caller) throws IOException, IncorrectWorkingReferencesException {
@@ -52,27 +53,26 @@ public abstract class JobHandler implements Runnable {
             throw new IncorrectWorkingReferencesException("A problem was risen when getting info from file: "+e.getMessage());
         }
     }
+
     protected abstract void loadInfoFromJobFile();
     public void tryToMoveIfPossible() throws IOException, IncorrectWorkingReferencesException, NoElementFoundException, TooMuchTriesException {
-        if (StringUtils.isEmpty(fileName)) {
+        if (StringUtils.isEmpty(elementName)) {
             logger.nLog("this job has not a fileName retrieved, so it cannot be processed.");
         } else {
-            elementName = fileName;
             logger.nLog("going to try handle the following element: "+downloadId);
             getElementHandler().crashHandle();
             jobFile.forceMarkDone();
+            transmissionJob.forceMarkDone();
         }
     }
-
     @Override
     public void run() {
         boolean error=false;
         try {
             logger.nLog("going to handle the so called <{0}>", fullTitle);
             setJobStateInitiated();
-            if (StringUtils.isNotEmpty(fileName)) {
-                logger.nLog("Retrieved successfully from file the cached element name: <{0}> :D", fileName);
-                elementName = fileName;
+            if (StringUtils.isNotEmpty(elementName)) {
+                logger.nLog("Retrieved successfully from file the cached element name: <{0}> :D", elementName);
             } else {
                 retrieveFileNameFromArrApp();
                 writeElementNameToJobInfo(elementName);
@@ -89,8 +89,8 @@ public abstract class JobHandler implements Runnable {
             setJobStateFinished(error);
         }
     }
-    protected abstract ElementHandler getElementHandler() throws IOException;
 
+    protected abstract ElementHandler getElementHandler() throws IOException;
     protected abstract void retrieveFileNameFromArrApp() throws TooMuchTriesException;
 
     private void writeElementNameToJobInfo(String elementName) throws IOException {
@@ -170,4 +170,12 @@ public abstract class JobHandler implements Runnable {
         else return null;
     }
 
+    public String getDownloadId() {
+        return downloadId;
+    }
+
+    public void setTransmissionJob(TransmissionJobFile transmissionJob) {
+        this.transmissionJob = transmissionJob;
+        this.elementName = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_NAME);
+    }
 }
