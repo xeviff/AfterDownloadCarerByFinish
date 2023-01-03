@@ -162,7 +162,7 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
                 if (jobsState.containsDownload(arrJob.getDownloadId()))
                     filesIgnored++;
                 else {
-                    jobsState.put(arrJob.getJobType(), arrJob.getDownloadId(), arrJob.getJobTitle(), "Awaiting finished download trigger");
+                    jobsState.put(arrJob.getJobType(), arrJob.getDownloadId(), arrJob.getJobTitle(), "awaiting");
                     filesIncorporated++;
                 }
             }
@@ -181,7 +181,8 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
 
     private void handleJobsInParallel(List<JobHandler> candidateJobs, List<File> transmissionJobFiles) {
         ExecutorService executor = Executors.newFixedThreadPool(transmissionJobFiles.size());
-        getPresentJobsFromCandidates(candidateJobs, transmissionJobFiles)
+        getPresentJobsFromCandidates(candidateJobs, transmissionJobFiles).stream()
+                .filter(job -> !jobsState.isJobWorking(job.getDownloadId()))
                 .forEach(executor::execute);
     }
 
@@ -206,7 +207,7 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
                     if (candidateArrJob.isPresent()) {
                         candidateArrJob.get().setTransmissionJob(transmissionJob);
                         presentJobs.add(candidateArrJob.get());
-                    } else {
+                    } else if (!jobsState.containsDownload(downloadId)){
                         jobsState.put(JobFileManager.JobFileType.TRANSMISSION_JOBS, downloadId, torrentName, "no arr-job found");
                     }
                 }

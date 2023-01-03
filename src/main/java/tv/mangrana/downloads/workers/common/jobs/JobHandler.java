@@ -72,8 +72,8 @@ public abstract class JobHandler implements Runnable{
             logger.nLog("going to handle the so called <{0}>", fullTitle);
             setJobStateWorking();
             getElementHandler().handle();
-            writeCompletedStatusToJobInfo(jobFile.getFile());
-            writeCompletedStatusToJobInfo(transmissionJob.getFile());
+            //writeCompletedStatusToJobInfo(jobFile.getFile());
+            //writeCompletedStatusToJobInfo(transmissionJob.getFile());
             jobFile.markDone();
             transmissionJob.forceMarkDone();
         } catch (Exception e) {

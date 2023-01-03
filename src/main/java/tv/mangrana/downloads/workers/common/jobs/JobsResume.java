@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static tv.mangrana.downloads.workers.common.jobs.JobsResume.JobInfo.WORKING_STATE;
 import static tv.mangrana.utils.Output.*;
 
 public class JobsResume {
@@ -19,7 +20,8 @@ public class JobsResume {
         jobsState = new ArrayList<>();
     }
 
-    private static class JobInfo {
+    static class JobInfo {
+        public static final String WORKING_STATE = "working";
         String downloadId;
         JobFileType jobType;
         String title;
@@ -75,11 +77,11 @@ public class JobsResume {
         resumeJobsLogPrint(false);
     }
     public void resumeJobsLogPrint(boolean hasIncorporatedJobs) {
-        if (hasIncorporatedJobs || reportDelayCounter > 10 || !sameResumeAlreadyPrinted()) {
+        if (hasIncorporatedJobs || !sameResumeAlreadyPrinted() || reportDelayCounter > 60) {
             log("**** JOBS RESUME ****");
             this.jobsState
                     .stream()
-                    .sorted(Comparator.comparing(JobInfo::getUpdateTime))
+                    .sorted(Comparator.comparing(JobInfo::getUpdateTime).reversed())
                     .forEach(job ->
                             log("* Type: {3} | Id: {4} | Job: {0} | current state: {1} | updated: {2}",
                                     job.title, job.state, job.updateTime.format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)), job.jobType.getFolderName(), job.downloadId)
@@ -111,6 +113,10 @@ public class JobsResume {
 
     public boolean containsDownload (String downloadId) {
         return indexedJobsInfo.containsKey(downloadId);
+    }
+
+    public boolean isJobWorking (String downloadId) {
+        return containsDownload(downloadId) && WORKING_STATE.equals(indexedJobsInfo.get(downloadId).state);
     }
 
 }
