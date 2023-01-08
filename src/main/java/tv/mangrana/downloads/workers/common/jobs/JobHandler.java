@@ -9,6 +9,7 @@ import tv.mangrana.downloads.workers.sonarr.jobs.SonarrJobFile;
 import tv.mangrana.downloads.workers.sonarr.jobs.SonarrJobHandler;
 import tv.mangrana.downloads.workers.transmission.TransmissionJobFile;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
+import tv.mangrana.exception.JobFileNotMovedException;
 import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.exception.TooMuchTriesException;
 import tv.mangrana.google.api.client.RemoteCopyService;
@@ -60,8 +61,12 @@ public abstract class JobHandler implements Runnable{
         } else {
             logger.nLog("going to try handle the following element: "+downloadId);
             getElementHandler().crashHandle();
-            jobFile.forceMarkDone();
-            transmissionJob.forceMarkDone();
+            try {
+                jobFile.forceMarkDone();
+                transmissionJob.forceMarkDone();
+            } catch (JobFileNotMovedException e) {
+                orchestrator.blackListJob(this);
+            }
         }
     }
 
@@ -79,7 +84,11 @@ public abstract class JobHandler implements Runnable{
         } catch (Exception e) {
             error=true;
             logger.nLog("Something wrong handling the job {1}: {0}", e.getMessage(), fullTitle);
-            jobFile.driveBack();
+            try {
+                jobFile.driveBack();
+            } catch (JobFileNotMovedException ex) {
+                logger.nHLog("Couldn't move black the -doing- job to -to_do- folder");
+            }
             e.printStackTrace();
         } finally {
             setJobStateFinished(error);
@@ -98,7 +107,11 @@ public abstract class JobHandler implements Runnable{
     }
 
     private void setJobStateWorking() {
-        jobFile.markDoing();
+        try {
+            jobFile.markDoing();
+        } catch (JobFileNotMovedException e) {
+            logger.nLog("Job has not moved to -doing- folder");
+        }
         orchestrator.jobWorking(this);
     }
 

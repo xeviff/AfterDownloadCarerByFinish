@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static tv.mangrana.downloads.workers.common.jobs.JobHandler.COMPLETE_STATUS;
+import static tv.mangrana.downloads.workers.common.jobs.JobsResume.JobInfo.*;
 import static tv.mangrana.jobs.JobFileManager.moveUncompletedJobsToRetry;
 import static tv.mangrana.jobs.JobFileManager.retrieveJobFiles;
 import static tv.mangrana.utils.Output.log;
@@ -106,7 +107,7 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
         if (!transmissionJobFiles.isEmpty()) {
             for (File transmissionJobFile : transmissionJobFiles) {
                 TransmissionJobFile transmissionJob = new TransmissionJobFile(transmissionJobFile);
-                String torrentHash = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_HASH);
+                String torrentHash = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_HASH).toUpperCase();
                 Optional<JobHandler> optionalArrJob = getJobByDownloadId(torrentHash, candidateJobs);
                 if (optionalArrJob.isPresent()) {
                     JobHandler arrJob = optionalArrJob.get();
@@ -144,7 +145,8 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
                     jobs.add(job);
                 } catch (IOException | IncorrectWorkingReferencesException  e) {
                     String identifier = jobFile.getAbsolutePath();
-                    log("could not get the job from file " + identifier);
+                    logger.nLog("WARN: Could not get the job from file {0} by this reason: {1}", identifier, e.getMessage());
+                    e.printStackTrace();
                 }
             }
         }
@@ -182,7 +184,7 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
     private void handleJobsInParallel(List<JobHandler> candidateJobs, List<File> transmissionJobFiles) {
         ExecutorService executor = Executors.newFixedThreadPool(transmissionJobFiles.size());
         getPresentJobsFromCandidates(candidateJobs, transmissionJobFiles).stream()
-                .filter(job -> !jobsState.isJobWorking(job.getDownloadId()))
+                .filter(job -> !jobsState.isJobAlreadyInTreatment(job.getDownloadId()))
                 .forEach(executor::execute);
     }
 
@@ -220,17 +222,22 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
 
     public void jobWorking(JobHandler job) {
         logger.nLog("WORKING WITH "+job.getFullTitle());
-        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), "working");
+        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), WORKING_STATE);
     }
 
     public void jobFinished(JobHandler job) {
-        logger.nLog("NOT WORKING ANYMORE WITH "+job.getFullTitle());
+        logger.nLog("Successfully handled "+job.getFullTitle());
         jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), "finished");
     }
 
     public void jobError(JobHandler job) {
-        logger.nLog("NOT WORKING ANYMORE WITH "+job.getFullTitle());
-        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), "error");
+        logger.nLog("Handled with error/s "+job.getFullTitle());
+        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), ERROR_STATE);
+    }
+
+    @Override
+    public void blackListJob(JobHandler job) {
+        jobsState.put(job.getJobType(), job.getDownloadId(), job.getJobTitle(), BLACKLISTED);
     }
 
 }

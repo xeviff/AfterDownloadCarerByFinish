@@ -8,6 +8,8 @@ movies_team_drive_id: 23lk4kjh5k234thanks
 series_team_drive_id: 23lk4kjh5k234thanks
 google_retry_interval: 30
 job_files_pick_up_interval: 1
+element_lookup_max_retries: 5
+children_lookup_max_retries: 10
 
 sonarr_api_host: your-sonarr.domain.is
 sonarr_api_key: 1y2u2u3u4ui4o5o5hi

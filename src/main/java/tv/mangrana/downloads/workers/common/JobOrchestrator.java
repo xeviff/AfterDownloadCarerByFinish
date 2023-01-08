@@ -10,4 +10,5 @@ public interface JobOrchestrator {
 
     void jobError(JobHandler job);
 
+    void blackListJob(JobHandler job);
 }

@@ -26,7 +26,7 @@ public class SerieRefresher {
             Output.log("could have not refreshed the serie {0}-{2} because of unexpected error {1}. Stacktrace will be printed", serie.getId(), serie.getTitle(), e.getMessage());
             e.printStackTrace();
         }
-        plexCommander.scanByPath(serie.getPath());
+        plexCommander.scanSerieByPath(serie.getPath());
     }
 
     public void refreshSerieInSonarrAndPlex(SonarrSerie serie) {

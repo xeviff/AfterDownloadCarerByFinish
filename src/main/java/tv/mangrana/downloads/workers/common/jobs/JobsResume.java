@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static tv.mangrana.downloads.workers.common.jobs.JobsResume.JobInfo.WORKING_STATE;
+import static tv.mangrana.downloads.workers.common.jobs.JobsResume.JobInfo.*;
 import static tv.mangrana.utils.Output.*;
 
 public class JobsResume {
@@ -20,8 +20,10 @@ public class JobsResume {
         jobsState = new ArrayList<>();
     }
 
-    static class JobInfo {
+    public static class JobInfo {
         public static final String WORKING_STATE = "working";
+        public static final String ERROR_STATE = "error";
+        public static final String BLACKLISTED = "BLACKLIST";
         String downloadId;
         JobFileType jobType;
         String title;
@@ -61,6 +63,7 @@ public class JobsResume {
     }
 
     public void put(JobFileType jobType, String downloadId, String jobTitle, String state) {
+        downloadId = downloadId.toUpperCase();
         LocalDateTime now = LocalDateTime.now();
         if (indexedJobsInfo.containsKey(downloadId)) {
             JobInfo jobInfo = indexedJobsInfo.get(downloadId);
@@ -115,8 +118,11 @@ public class JobsResume {
         return indexedJobsInfo.containsKey(downloadId);
     }
 
-    public boolean isJobWorking (String downloadId) {
-        return containsDownload(downloadId) && WORKING_STATE.equals(indexedJobsInfo.get(downloadId).state);
+    public boolean isJobAlreadyInTreatment(String downloadId) {
+        return containsDownload(downloadId)
+                && (WORKING_STATE.equals(indexedJobsInfo.get(downloadId).state)
+                || ERROR_STATE.equals(indexedJobsInfo.get(downloadId).state)
+                || BLACKLISTED.equals(indexedJobsInfo.get(downloadId).state));
     }
 
 }

@@ -1,5 +1,7 @@
 package tv.mangrana.downloads.workers.sonarr;
 
+import com.google.api.services.drive.model.File;
+import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.downloads.workers.common.RetryEngine;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
@@ -7,16 +9,13 @@ import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.exception.TooMuchTriesException;
 import tv.mangrana.sonarr.api.schema.series.SonarrSerie;
 import tv.mangrana.utils.EasyLogger;
-import com.google.api.services.drive.model.File;
-import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.CHECK_EPISODE_FILES_NUMBER_UPLOADED;
-import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.DOWNLOADS_SERIES_FOLDER_ID;
+import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static tv.mangrana.utils.Output.msg;
 import static tv.mangrana.utils.StringCaptor.getSeasonFolderNameFromSeason;
 
@@ -43,12 +42,13 @@ public class SeasonHandler extends SonarrElementHandler {
             Function<File, List<File>> childrenRetriever = file ->
                     googleDriveApiGateway.getChildrenFromParent(file, false);
             Function<File, Boolean> fileNameConstraint = file -> !file.getName().endsWith(".part");
-            RetryEngine<File> retryer = null;
+            RetryEngine<File> retryer;
             if (Boolean.parseBoolean(configFileLoader.getConfig(CHECK_EPISODE_FILES_NUMBER_UPLOADED))) {
+                int childrenLookupMaxRetries = Integer.parseInt(configFileLoader.getConfig(CHILDREN_LOOKUP_MAX_RETRIES));
                 retryer = new RetryEngine<>(
                         "SeasonOnGoogle",
                         googleWaitInterval,
-                        new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint),
+                        new RetryEngine.ChildrenRequirements<>(episodeCount, childrenRetriever, fileNameConstraint, childrenLookupMaxRetries),
                         this::log
                 );
             } else {

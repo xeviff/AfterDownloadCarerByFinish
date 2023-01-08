@@ -97,7 +97,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        tv.mangrana.downloads.DownloadedItemsHandler
+                                        tv.mangrana.downloads.workers.FinishedDownloadsHandler
                                     </mainClass>
                                 </manifest>
                             </archive>

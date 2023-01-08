@@ -1,5 +1,6 @@
 package tv.mangrana.downloads.workers.sonarr;
 
+import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.downloads.workers.common.RetryEngine;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
@@ -7,7 +8,6 @@ import tv.mangrana.exception.NoElementFoundException;
 import tv.mangrana.exception.TooMuchTriesException;
 import tv.mangrana.sonarr.api.schema.series.SonarrSerie;
 import tv.mangrana.utils.EasyLogger;
-import org.apache.commons.lang3.concurrent.CircuitBreakingException;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -34,7 +34,7 @@ public class EpisodeHandler extends SonarrElementHandler {
                 this::log)
         );
         SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
-        if (Objects.isNull(serie)) return;
+        if (Objects.isNull(serie)) throw new NoElementFoundException("Serie not found");
         String seasonFolderName = getSeasonFolderNameFromEpisode(title);
         copyService.copyEpisodeFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);

@@ -1,5 +1,7 @@
 package tv.mangrana.google.api.client;
 
+import com.google.api.services.drive.model.File;
+import org.apache.commons.lang.StringUtils;
 import tv.mangrana.config.ConfigFileLoader;
 import tv.mangrana.downloads.workers.common.RetryEngine;
 import tv.mangrana.exception.NoElementFoundException;
@@ -7,8 +9,6 @@ import tv.mangrana.exception.TooMuchTriesException;
 import tv.mangrana.google.api.client.gateway.GoogleDriveApiGateway;
 import tv.mangrana.utils.EasyLogger;
 import tv.mangrana.utils.PathUtils;
-import com.google.api.services.drive.model.File;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,12 +28,13 @@ public class RemoteCopyService {
     GoogleDriveApiGateway googleDriveApiGateway;
     RetryEngine<File> retryEngine;
 
-    private static final int TOO_MUCH_RETRIES_THRESHOLD = 40;
+    int elementLookupMaxRetries;
 
     public RemoteCopyService(ConfigFileLoader configFileLoader) throws IOException {
         this.logger = new EasyLogger("CopyService");
         this.configFileLoader = configFileLoader;
         googleDriveApiGateway = new GoogleDriveApiGateway();
+        elementLookupMaxRetries = Integer.parseInt(configFileLoader.getConfig(ELEMENT_LOOKUP_MAX_RETRIES));
     }
     public void setRetryEngine(RetryEngine<File> retryEngine){
         this.retryEngine = retryEngine;
@@ -76,7 +77,7 @@ public class RemoteCopyService {
                 return null;
             }
         };
-        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? getDownloadedSeasonFolder.get() : retryEngine.tryUntilGotDesired(getDownloadedSeasonFolder, TOO_MUCH_RETRIES_THRESHOLD);
+        File downloadedSeasonFolder = Objects.isNull(retryEngine) ? getDownloadedSeasonFolder.get() : retryEngine.tryUntilGotDesired(getDownloadedSeasonFolder, elementLookupMaxRetries);
         if (Objects.isNull(downloadedSeasonFolder))
             throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the downloaded folder "+ downloadedFolderName);
 
@@ -112,7 +113,7 @@ public class RemoteCopyService {
                 return null;
             }
         };
-        File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile, TOO_MUCH_RETRIES_THRESHOLD);
+        File downloadedFile = Objects.isNull(retryEngine) ? getDownloadedEpisodeFile.get() : retryEngine.tryUntilGotDesired(getDownloadedEpisodeFile, elementLookupMaxRetries);
         if (Objects.isNull(downloadedFile)) {
             throw new NoElementFoundException("SHOULD NOT HAPPEN! definitely, could not retrieve the video file "+ downloadedFileName);
         }
