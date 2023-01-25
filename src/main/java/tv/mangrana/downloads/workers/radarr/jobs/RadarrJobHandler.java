@@ -26,7 +26,6 @@ public class RadarrJobHandler extends JobHandler {
     @SuppressWarnings("unchecked")
     protected void loadInfoFromJobFile() {
         fullTitle = jobFile.getInfo(RADARR_RELEASE_TITLE);
-        jobTitle = fullTitle.substring(0, 45)+"..";
         logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_DOWNLOAD_ID);
         movieId = Integer.parseInt(jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_MOVIE_ID));

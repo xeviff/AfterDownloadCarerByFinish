@@ -149,6 +149,7 @@ public abstract class JobHandler implements Runnable{
     public void setTransmissionJob(TransmissionJobFile transmissionJob) {
         this.transmissionJob = transmissionJob;
         this.elementName = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_NAME);
+        this.jobTitle = elementName.substring(0, 45) + "..";
     }
 
     public abstract boolean isAlreadyComplete();
