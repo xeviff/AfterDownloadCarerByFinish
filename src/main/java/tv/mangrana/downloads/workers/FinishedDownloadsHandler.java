@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 
 import static tv.mangrana.config.ConfigFileLoader.ProjectConfiguration.*;
 import static tv.mangrana.downloads.workers.common.jobs.JobHandler.COMPLETE_STATUS;
-import static tv.mangrana.downloads.workers.common.jobs.JobsResume.JobInfo.*;
+import static tv.mangrana.downloads.workers.common.jobs.JobInfo.*;
 import static tv.mangrana.jobs.JobFileManager.moveUncompletedJobsToRetry;
 import static tv.mangrana.jobs.JobFileManager.retrieveJobFiles;
 import static tv.mangrana.utils.Output.log;
@@ -208,6 +208,7 @@ public class FinishedDownloadsHandler implements Handler, JobOrchestrator {
                     }
                     if (candidateArrJob.isPresent()) {
                         candidateArrJob.get().setTransmissionJob(transmissionJob);
+                         jobsState.overrideName(downloadId, torrentName);
                         presentJobs.add(candidateArrJob.get());
                     } else if (!jobsState.containsDownload(downloadId)){
                         jobsState.put(JobFileManager.JobFileType.TRANSMISSION_JOBS, downloadId, torrentName, "no arr-job found");

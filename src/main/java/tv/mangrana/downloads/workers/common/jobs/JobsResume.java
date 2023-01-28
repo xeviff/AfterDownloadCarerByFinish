@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static tv.mangrana.downloads.workers.common.jobs.JobsResume.JobInfo.*;
+import static tv.mangrana.downloads.workers.common.jobs.JobInfo.*;
 import static tv.mangrana.utils.Output.*;
 
 public class JobsResume {
@@ -18,48 +18,6 @@ public class JobsResume {
 
     public JobsResume(){
         jobsState = new ArrayList<>();
-    }
-
-    public static class JobInfo {
-        public static final String WORKING_STATE = "working";
-        public static final String ERROR_STATE = "error";
-        public static final String BLACKLISTED = "BLACKLIST";
-        String downloadId;
-        JobFileType jobType;
-        String title;
-        String state;
-        LocalDateTime updateTime;
-        public JobInfo(JobFileType jobType, String downloadId, String title, String state, LocalDateTime updateTime) {
-            this.jobType = jobType;
-            this.downloadId = downloadId;
-            this.title = title;
-            this.state = state;
-            this.updateTime = updateTime;
-        }
-        public JobInfo(JobInfo toClone) {
-            this(toClone.jobType, toClone.downloadId, toClone.title, toClone.state, toClone.updateTime);
-        }
-        public void setState(String state) {
-            this.state = state;
-        }
-        public LocalDateTime getUpdateTime() {
-            return updateTime;
-        }
-        public void setUpdateTime(LocalDateTime updateTime) {
-            this.updateTime = updateTime;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            JobInfo jobInfo = (JobInfo) o;
-            return Objects.equals(downloadId, jobInfo.downloadId);
-        }
-        @Override
-        public int hashCode() {
-            return downloadId != null ? downloadId.hashCode() : 0;
-        }
     }
 
     public void put(JobFileType jobType, String downloadId, String jobTitle, String state) {
@@ -74,6 +32,10 @@ public class JobsResume {
             indexedJobsInfo.put(downloadId, jobInfo);
             jobsState.add(jobInfo);
         }
+    }
+
+    public void overrideName(String downloadId, String newName) {
+        indexedJobsInfo.get(downloadId.toUpperCase()).overrideName(JobInfo.cutTitle(newName));
     }
 
     public void resumeJobsLogPrint() {

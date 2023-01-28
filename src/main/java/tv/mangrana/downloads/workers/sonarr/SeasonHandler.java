@@ -63,7 +63,12 @@ public class SeasonHandler extends SonarrElementHandler {
 
         SonarrSerie serie = sonarrApiGateway.getSerieById(appElementId);
         if (Objects.isNull(serie)) throw new NoElementFoundException(msg("Could not found serie with id {0} in Sonarr", String.valueOf(appElementId)));
-        String seasonFolderName = getSeasonFolderNameFromSeason(elementName);
+        String seasonFolderName;
+        try {
+            seasonFolderName = getSeasonFolderNameFromSeason(elementName);
+        } catch (IncorrectWorkingReferencesException e) {
+            seasonFolderName = getSeasonFolderNameFromSeason(title);
+        }
         copyService.copySeasonFromDownloadToItsLocation(elementName, serie.getPath(), seasonFolderName);
         serieRefresher.refreshSerieInSonarrAndPlex(serie);
     }

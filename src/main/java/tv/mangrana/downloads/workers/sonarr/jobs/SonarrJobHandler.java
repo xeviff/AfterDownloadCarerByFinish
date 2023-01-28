@@ -9,7 +9,6 @@ import tv.mangrana.downloads.workers.sonarr.SerieRefresher;
 import tv.mangrana.downloads.workers.sonarr.SonarrElementHandler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import tv.mangrana.sonarr.api.client.gateway.SonarrApiGateway;
-import tv.mangrana.utils.EasyLogger;
 
 import java.io.IOException;
 
@@ -34,7 +33,6 @@ public class SonarrJobHandler extends JobHandler {
     @SuppressWarnings("unchecked")
     protected void loadInfoFromJobFile() {
         fullTitle = jobFile.getInfo(SONARR_RELEASE_TITLE);
-        logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_DOWNLOAD_ID);
         episodeCount = Integer.parseInt(jobFile.getInfo(SonarrJobFile.GrabInfo.SONARR_RELEASE_EPISODECOUNT));
         type = episodeCount == 1 ? EPISODE : DownloadType.SEASON;

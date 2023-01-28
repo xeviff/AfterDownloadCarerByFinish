@@ -29,12 +29,13 @@ public abstract class JobHandler implements Runnable{
     protected ConfigFileLoader configFileLoader;
     protected RemoteCopyService copyService;
     public static final String COMPLETE_STATUS = "complete";
+    private static final String NOT_SET = "-not_set-";
 
     @SuppressWarnings("rawtypes")
     protected JobFile jobFile;
     final JobOrchestrator orchestrator;
 
-    protected String jobTitle="-not_set-";
+    protected String jobTitle=NOT_SET;
     protected String fullTitle;
     protected String elementName;
     protected String downloadId;
@@ -52,6 +53,7 @@ public abstract class JobHandler implements Runnable{
             e.printStackTrace();
             throw new IncorrectWorkingReferencesException("A problem was risen when getting info from file: "+e.getMessage());
         }
+        logger = new EasyLogger("*> "+JobInfo.cutTitle(fullTitle));
     }
 
     protected abstract void loadInfoFromJobFile();
@@ -131,7 +133,7 @@ public abstract class JobHandler implements Runnable{
     }
 
     public String getJobTitle() {
-        return jobTitle;
+        return NOT_SET.equals(jobTitle) ? JobInfo.cutTitle(fullTitle) : jobTitle;
     }
 
     public JobFileManager.JobFileType getJobType() {
@@ -149,7 +151,8 @@ public abstract class JobHandler implements Runnable{
     public void setTransmissionJob(TransmissionJobFile transmissionJob) {
         this.transmissionJob = transmissionJob;
         this.elementName = transmissionJob.getInfo(TransmissionJobFile.GrabInfo.TORRENT_NAME);
-        this.jobTitle = elementName.substring(0, 45) + "..";
+        this.jobTitle = JobInfo.cutTitle(elementName);
+        logger = new EasyLogger("*> "+jobTitle);
     }
 
     public abstract boolean isAlreadyComplete();

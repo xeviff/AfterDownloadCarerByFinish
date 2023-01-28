@@ -7,7 +7,6 @@ import tv.mangrana.downloads.workers.common.jobs.JobHandler;
 import tv.mangrana.downloads.workers.radarr.MovieHandler;
 import tv.mangrana.exception.IncorrectWorkingReferencesException;
 import tv.mangrana.radarr.api.client.gateway.RadarrApiGateway;
-import tv.mangrana.utils.EasyLogger;
 
 import java.io.IOException;
 
@@ -26,7 +25,6 @@ public class RadarrJobHandler extends JobHandler {
     @SuppressWarnings("unchecked")
     protected void loadInfoFromJobFile() {
         fullTitle = jobFile.getInfo(RADARR_RELEASE_TITLE);
-        logger = new EasyLogger("*> "+jobTitle);
         downloadId = jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_DOWNLOAD_ID);
         movieId = Integer.parseInt(jobFile.getInfo(RadarrJobFile.GrabInfo.RADARR_MOVIE_ID));
     }
